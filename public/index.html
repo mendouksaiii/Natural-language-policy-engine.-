@@ -3,143 +3,75 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>SENTINEL — Natural Language Policy Engine | OWS</title>
-  <meta name="description" content="AI agent spending policies in plain English, evaluated in real time before every ows_sign call.">
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@300;400;500;600&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="style.css">
+  <title>SENTINEL | Natural Language Policy Engine</title>
+  <link rel="stylesheet" href="landing.css">
 </head>
 <body>
-  <div class="bg-grid"></div>
-  <div class="bg-glow bg-glow-1"></div>
-  <div class="bg-glow bg-glow-2"></div>
+  <div class="noise"></div>
+  <div class="grid-bg"></div>
 
-  <header id="header">
-    <div class="header-left">
-      <div class="logo-icon">
-        <svg width="28" height="28" viewBox="0 0 28 28" fill="none">
-          <rect x="2" y="2" width="24" height="24" rx="6" stroke="currentColor" stroke-width="2"/>
-          <path d="M8 14h12M14 8v12" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
-          <circle cx="14" cy="14" r="4" stroke="currentColor" stroke-width="1.5" fill="none"/>
-        </svg>
-      </div>
-      <div>
-        <h1>SENTINEL</h1>
-        <span class="subtitle">Natural Language Policy Engine — extending OWS</span>
-      </div>
+  <nav>
+    <div class="brand">SENTINEL</div>
+    <a href="https://openwallet.sh" target="_blank" class="nav-link">Build with OWS</a>
+  </nav>
+
+  <main class="hero">
+    <h1 class="hero-title">
+      <span class="word-box"><span class="word-text">PLAIN</span></span><br>
+      <span class="word-box"><span class="word-text">ENGLISH.</span></span><br>
+      <span class="word-box"><span class="word-text">NOT JSON.</span></span>
+    </h1>
+
+    <p class="hero-desc">
+      Extending the Open Wallet Standard. Let Claude intercept and evaluate every transaction request against human-readable intent before touching your private keys.
+    </p>
+
+    <div class="cta-wrapper">
+      <a href="/dashboard.html" class="btn-launch">
+        <span>Enter Demo</span> <span class="btn-arrow">→</span>
+      </a>
     </div>
-    <div class="header-right">
-      <div class="badge" id="llm-badge"><span class="badge-dot"></span><span id="llm-text">Connecting...</span></div>
-      <div class="badge badge-ows"><span class="badge-dot dot-ows"></span>OWS v1.0</div>
-      <button class="btn-icon" id="btn-reset" title="Reset Demo">↻</button>
-    </div>
-  </header>
 
-  <main id="dashboard">
-    <!-- WALLET -->
-    <section class="panel" id="panel-wallet">
-      <div class="panel-head"><span class="panel-ico">💰</span><h2>Agent Wallet</h2><span class="tag" id="wallet-tag">FUNDED</span></div>
-      <div class="panel-body">
-        <div class="balance"><span class="bal-sign">$</span><span class="bal-num" id="bal">100.00</span><span class="bal-tok">USDC</span></div>
-        <div class="meta-grid">
-          <div class="meta-row"><span>Address</span><span class="mono" id="w-addr">0x7a3B1c9D...4e5F6a8B</span></div>
-          <div class="meta-row"><span>Chain</span><span id="w-chain"><span class="chain-dot"></span>Base</span></div>
-          <div class="meta-row"><span>Last TX</span><span id="w-last">—</span></div>
-          <div class="meta-row"><span>Spent Today</span><span id="w-today">$0.00</span></div>
+    <section class="split-view">
+      <div class="split-col">
+        <div class="split-header">
+          <span>The Old Primitive</span>
+          <span>Rigid</span>
+        </div>
+        <div class="code-block cross">
+{
+  "max_spend_usd": 20,
+  "allowed_chains": ["base"],
+  "blocked_days": [0, 6]
+}
+<br><br>
+// Fails completely on nuance.
         </div>
       </div>
-    </section>
-
-    <!-- POLICY -->
-    <section class="panel" id="panel-policy">
-      <div class="panel-head"><span class="panel-ico">📜</span><h2>Policy Document</h2><button class="btn-save" id="btn-save">Save</button></div>
-      <div class="panel-body policy-body">
-        <textarea id="policy-editor" spellcheck="false"></textarea>
-        <div class="policy-hint">Edit rules in plain English — changes take effect immediately</div>
-      </div>
-    </section>
-
-    <!-- TRANSACTIONS -->
-    <section class="panel" id="panel-tx">
-      <div class="panel-head"><span class="panel-ico">📋</span><h2>Transaction Log</h2><span class="tx-count" id="tx-count">0 transactions</span></div>
-      <div class="panel-body">
-        <div class="tx-feed" id="tx-feed">
-          <div class="tx-empty"><div class="tx-empty-ico">⏳</div><p>No transactions yet. Use the controls below to simulate agent spending.</p></div>
+      
+      <div class="split-col">
+        <div class="split-header">
+          <span style="color: var(--accent);">The New Sentinel</span>
+          <span>Nuanced</span>
         </div>
-      </div>
-    </section>
-
-    <!-- HEARTBEAT -->
-    <section class="panel" id="panel-hb">
-      <div class="panel-head"><span class="panel-ico">💓</span><h2>Heartbeat</h2><span class="tag tag-active" id="hb-tag">ACTIVE</span></div>
-      <div class="panel-body hb-body">
-        <div class="hb-ring-wrap">
-          <svg class="hb-ring" viewBox="0 0 200 200">
-            <circle cx="100" cy="100" r="88" class="ring-bg"/>
-            <circle cx="100" cy="100" r="88" class="ring-fg" id="hb-ring"/>
-          </svg>
-          <div class="hb-center"><div class="hb-days" id="hb-days">0</div><div class="hb-lbl">days idle</div></div>
+        <div class="code-block highlight">
+1. Never spend more than $20.<br>
+2. Unless it's emergency cloud infrastructure.<br>
+3. If silent for 7 days, trigger the Dead Agent Switch.
+<br><br>
+# Claude evaluates intent. Wallet obeys.
         </div>
-        <div class="meta-grid">
-          <div class="meta-row"><span>Threshold</span><span class="mono">7 days</span></div>
-          <div class="meta-row"><span>Last Activity</span><span class="mono" id="hb-last">Just now</span></div>
-          <div class="meta-row"><span>Backup</span><span class="mono" id="hb-backup">0xBACK...SAFE</span></div>
-        </div>
-        <button class="btn-ff" id="btn-ff">⏩ Fast Forward 7 Days</button>
       </div>
     </section>
   </main>
 
-  <!-- CONTROLS -->
-  <section class="controls" id="controls">
-    <h3>Simulate Agent Transactions</h3>
-    <div class="ctrl-grid">
-      <button class="tx-btn" data-amount="15" data-purpose="GPT-4 API access monthly subscription" data-recipient="OpenAI">
-        <span class="tx-ico">🤖</span><span class="tx-lbl">API Service</span><span class="tx-amt">$15</span>
-      </button>
-      <button class="tx-btn" data-amount="8" data-purpose="Real-time market data feed subscription" data-recipient="CoinGecko">
-        <span class="tx-ico">📊</span><span class="tx-lbl">Data Feed</span><span class="tx-amt">$8</span>
-      </button>
-      <button class="tx-btn bad" data-amount="50" data-purpose="Purchase rare NFT artwork from collection" data-recipient="OpenSea">
-        <span class="tx-ico">🖼️</span><span class="tx-lbl">NFT Purchase</span><span class="tx-amt">$50</span>
-      </button>
-      <button class="tx-btn bad" data-amount="25" data-purpose="Premium hosting server upgrade" data-recipient="AWS">
-        <span class="tx-ico">☁️</span><span class="tx-lbl">Over Limit</span><span class="tx-amt">$25</span>
-      </button>
-      <button class="tx-btn" data-amount="12" data-purpose="Cloud compute instances for model training" data-recipient="Google Cloud">
-        <span class="tx-ico">⚡</span><span class="tx-lbl">Cloud Infra</span><span class="tx-amt">$12</span>
-      </button>
-      <button class="tx-btn custom" id="btn-custom"><span class="tx-ico">✏️</span><span class="tx-lbl">Custom TX</span><span class="tx-amt">Any $</span></button>
-    </div>
-  </section>
-
-  <!-- FLOW DIAGRAM -->
-  <section class="flow" id="flow">
-    <div class="flow-row">
-      <div class="flow-node"><div class="flow-n-ico">🤖</div><div>Agent</div></div>
-      <div class="flow-arrow" id="fa1">→</div>
-      <div class="flow-node active" id="fn-engine"><div class="flow-n-ico">🧠</div><div>Policy Engine</div></div>
-      <div class="flow-arrow" id="fa2">→</div>
-      <div class="flow-node" id="fn-llm"><div class="flow-n-ico">💬</div><div>Claude</div></div>
-      <div class="flow-arrow" id="fa3">→</div>
-      <div class="flow-node" id="fn-ows"><div class="flow-n-ico">🔐</div><div>OWS Sign</div></div>
-    </div>
-  </section>
-
-  <!-- MODAL -->
-  <div class="modal-bg" id="modal-bg">
-    <div class="modal">
-      <div class="modal-head"><h3>Custom Transaction</h3><button class="modal-x" id="modal-x">&times;</button></div>
-      <div class="modal-body">
-        <label>Amount (USDC)<input type="number" id="c-amount" placeholder="0.00" step="0.01" min="0.01"></label>
-        <label>Purpose<input type="text" id="c-purpose" placeholder="What is this payment for?"></label>
-        <label>Recipient<input type="text" id="c-recipient" placeholder="Who receives?"></label>
-        <label>Chain<select id="c-chain"><option value="Base">Base</option><option value="Ethereum">Ethereum</option><option value="Solana">Solana</option></select></label>
-      </div>
-      <button class="btn-submit" id="btn-submit-custom">Send Through Policy Engine</button>
-    </div>
-  </div>
-
-  <script src="app.js"></script>
+  <script>
+    // Parallax effect on grid
+    document.addEventListener('mousemove', (e) => {
+      const x = (e.clientX / window.innerWidth - 0.5) * 20;
+      const y = (e.clientY / window.innerHeight - 0.5) * 20;
+      document.querySelector('.grid-bg').style.transform = `translate(${x}px, ${y}px)`;
+    });
+  </script>
 </body>
 </html>
