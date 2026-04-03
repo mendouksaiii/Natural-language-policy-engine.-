@@ -9,7 +9,6 @@ function showDashboard() {
   setTimeout(() => {
     viewLanding.style.display = 'none';
     viewDashboard.style.display = 'flex';
-    // Small delay to allow display flex to apply before transitioning opacity
     requestAnimationFrame(() => {
       viewDashboard.style.opacity = '1';
     });
@@ -54,6 +53,15 @@ const txFeed = $('tx-feed');
 const txCount = $('tx-count');
 const llmFeed = $('llm-feed');
 
+// OWS DOM Refs
+const owsDot = $('ows-dot');
+const owsLabel = $('ows-label');
+const badgeMoonpay = $('badge-moonpay');
+const addrEvm = $('addr-evm');
+const addrSol = $('addr-sol');
+const addrBtc = $('addr-btc');
+const addrSrc = $('addr-src');
+
 // ─── WebSocket ───────────────────────────────────────────
 function connect() {
   const proto = location.protocol === 'https:' ? 'wss' : 'ws';
@@ -87,6 +95,9 @@ function initState(data) {
   updateRuleCount(data.policy);
   updateHeartbeat(data.heartbeat);
 
+  // OWS Status
+  if (data.owsStatus) updateOWSStatus(data.owsStatus);
+
   txFeed.innerHTML = '';
   if (data.wallet.transactions && data.wallet.transactions.length > 0) {
     data.wallet.transactions.forEach(tx => addTransaction(tx, false));
@@ -98,6 +109,42 @@ function initState(data) {
 function updateRuleCount(text) {
   const rules = text.split('\n').filter(l => l.trim().length > 5).length;
   ruleCountLbl.textContent = `${rules} RULES ACTIVE`;
+}
+
+// ─── OWS Status ──────────────────────────────────────────
+function updateOWSStatus(ows) {
+  if (ows.available) {
+    owsDot.classList.add('live');
+    owsLabel.textContent = 'OWS LIVE';
+    addrSrc.textContent = `// CAIP-10 · OWS VAULT`;
+  } else {
+    owsDot.classList.remove('live');
+    owsLabel.textContent = 'OWS SIM';
+    addrSrc.textContent = `// CAIP-10 · SIMULATION`;
+  }
+
+  if (ows.moonpay) {
+    badgeMoonpay.classList.add('active');
+  }
+
+  // Multi-chain addresses
+  if (ows.accounts) {
+    if (ows.accounts.evm) {
+      const a = ows.accounts.evm.address;
+      addrEvm.textContent = a.length > 14 ? a.substring(0, 6) + '...' + a.substring(a.length - 4) : a;
+      addrEvm.title = a;
+    }
+    if (ows.accounts.solana) {
+      const a = ows.accounts.solana.address;
+      addrSol.textContent = a.length > 12 ? a.substring(0, 4) + '...' + a.substring(a.length - 4) : a;
+      addrSol.title = a;
+    }
+    if (ows.accounts.bitcoin) {
+      const a = ows.accounts.bitcoin.address;
+      addrBtc.textContent = a.length > 14 ? a.substring(0, 6) + '...' + a.substring(a.length - 4) : a;
+      addrBtc.title = a;
+    }
+  }
 }
 
 // ─── Wallet & Stats ──────────────────────────────────────
@@ -172,6 +219,9 @@ function addTransaction(tx, animate = true) {
   
   if (animate) {
     logLLM(`DECISION: ${tx.decision}\nREASON: ${tx.reason}`);
+    if (tx.sigMethod === 'ows_sign') {
+      logLLM(`OWS SIGNATURE: ${tx.signature ? tx.signature.substring(0, 32) + '...' : 'N/A'}`);
+    }
   }
 
   const timeStr = new Date(tx.timestamp).toLocaleTimeString();
@@ -179,6 +229,17 @@ function addTransaction(tx, animate = true) {
   const card = document.createElement('div');
   card.className = `tx-item ${cls}`;
   
+  // Build signature line
+  let sigLine = '';
+  if (tx.txHash) {
+    sigLine += `<div class="tx-hash">HASH: ${tx.txHash.substring(0, 16)}...</div>`;
+  }
+  if (tx.signature) {
+    sigLine += `<div class="tx-sig"><span class="sig-badge">OWS</span> ${tx.signature.substring(0, 24)}...</div>`;
+  } else if (tx.sigMethod === 'simulation') {
+    sigLine += `<div class="tx-sig"><span class="sig-badge sim">SIM</span> mock signature</div>`;
+  }
+
   card.innerHTML = `
     <div class="tx-header">
       <span class="tx-badge ${cls}">${badgeTxt}</span>
@@ -186,7 +247,7 @@ function addTransaction(tx, animate = true) {
     </div>
     <div class="tx-desc">${tx.purpose || 'SYS RECOVERY'} <span class="tx-amt">$${tx.amount.toFixed(2)}</span></div>
     <div class="tx-reason">${tx.reason}</div>
-    ${tx.txHash ? `<div class="tx-hash">HASH: ${tx.txHash.substring(0, 16)}...</div>` : ''}
+    ${sigLine}
   `;
 
   txFeed.prepend(card);
@@ -307,6 +368,42 @@ document.addEventListener('keydown', e => {
     e.preventDefault();
     if (document.activeElement === policyEditor) savePolicy();
   }
+});
+
+// Second CTA at bottom of page
+const btnEnter2 = document.getElementById('btn-enter-dash-2');
+if (btnEnter2) btnEnter2.addEventListener('click', showDashboard);
+
+// ─── Hero Particles ──────────────────────────────────────
+function spawnParticles() {
+  const container = document.getElementById('hero-particles');
+  if (!container) return;
+  for (let i = 0; i < 30; i++) {
+    const p = document.createElement('div');
+    p.className = 'particle';
+    p.style.left = Math.random() * 100 + '%';
+    p.style.top = Math.random() * 100 + '%';
+    p.style.animationDelay = (Math.random() * 6) + 's';
+    p.style.animationDuration = (3 + Math.random() * 4) + 's';
+    p.style.width = p.style.height = (1 + Math.random() * 3) + 'px';
+    container.appendChild(p);
+  }
+}
+spawnParticles();
+
+// ─── Scroll Reveal Animations ────────────────────────────
+const observer = new IntersectionObserver((entries) => {
+  entries.forEach(ent => {
+    if (ent.isIntersecting) {
+      ent.target.classList.add('revealed');
+      observer.unobserve(ent.target);
+    }
+  });
+}, { threshold: 0.15 });
+
+document.querySelectorAll('.body-text, .heading-3, .feature-card, .code-block, .blockquote, .section-divider').forEach(el => {
+  el.classList.add('scroll-anim');
+  observer.observe(el);
 });
 
 // Boot

@@ -14,16 +14,31 @@
   <!-- 1. LANDING PAGE VIEW                       -->
   <!-- ========================================== -->
   <div id="view-landing">
+    <!-- Scan Lines Overlay -->
+    <div class="scanlines"></div>
+
     <!-- Hero Block -->
     <div class="hero">
+      <div class="hero-glow"></div>
+      <div class="hero-particles" id="hero-particles"></div>
+
       <div class="hero-logo">
-        <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
-          <polygon points="50 5, 95 25, 95 75, 50 95, 5 75, 5 25" fill="none" stroke="currentColor" stroke-width="4" />
+        <svg viewBox="0 0 120 140" xmlns="http://www.w3.org/2000/svg" class="shield-logo">
+          <!-- Shield shape -->
+          <path d="M60 8 L110 30 L110 85 Q110 120 60 135 Q10 120 10 85 L10 30 Z" 
+                fill="none" stroke="currentColor" stroke-width="5" stroke-linejoin="round" class="shield-path"/>
+          <!-- S lettermark -->
+          <path d="M72 45 L45 45 L45 65 L78 65 L78 95 L42 95" 
+                fill="none" stroke="currentColor" stroke-width="7" stroke-linecap="square" stroke-linejoin="miter" class="s-path"/>
+          <!-- Horizontal bar accents -->
+          <line x1="38" y1="55" x2="52" y2="55" stroke="currentColor" stroke-width="4" class="accent-line"/>
+          <line x1="68" y1="85" x2="82" y2="85" stroke="currentColor" stroke-width="4" class="accent-line"/>
         </svg>
       </div>
-      <h1 class="hero-title">SENTINEL</h1>
-      <div class="hero-subtitle">AGENT SPEND GOVERNANCE // OWS PROTOCOL</div>
-      <div class="hero-tagline">Plain English, Not JSON.</div>
+      <h1 class="hero-title animate-in">SENTINEL</h1>
+      <div class="hero-subtitle animate-in d2">AGENT SPEND GOVERNANCE // OWS PROTOCOL</div>
+      <div class="hero-tagline animate-in d3">Plain English, Not JSON.</div>
+      <button class="btn-cta hero-cta animate-in d4" id="btn-enter-dash">ENTER DASHBOARD &rarr;</button>
       <div class="scroll-ind">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
         <span>SCROLL TO READ</span>
@@ -130,7 +145,7 @@
       <div class="cta-label">BUILT FOR OWS BUIDLHACK 2026</div>
       <div class="cta-title">See It Running.</div>
       <div class="cta-sub">Watch Claude police agent transactions in real time.</div>
-      <button class="btn-cta" id="btn-enter-dash">ENTER DASHBOARD &rarr;</button>
+      <button class="btn-cta" id="btn-enter-dash-2">ENTER DASHBOARD &rarr;</button>
     </div>
 
     <footer>
@@ -159,8 +174,9 @@
       <div class="dh-right">
         <span class="badge">ETHEREUM</span>
         <span class="badge">SOLANA</span>
-        <span class="badge badge-dim">OWS v1.0</span>
-        <span class="badge-pill"><span class="dot"></span>AGENT LIVE</span>
+        <span class="badge">BITCOIN</span>
+        <span class="badge badge-moonpay" id="badge-moonpay">MOONPAY</span>
+        <span class="badge-pill" id="badge-ows"><span class="dot" id="ows-dot"></span><span id="ows-label">OWS SIM</span></span>
       </div>
     </header>
 
@@ -180,8 +196,11 @@
         </div>
 
         <div class="w-addr-box">
-          <div class="lbl">AGENT ADDRESS</div>
-          <div class="val">0x7a3b...6a8b<br>// EVM CAIP-10</div>
+          <div class="lbl">AGENT ADDRESSES</div>
+          <div class="addr-chain"><span class="addr-tag">EVM</span> <span class="addr-val" id="addr-evm">0x7a3b...6a8b</span></div>
+          <div class="addr-chain"><span class="addr-tag sol">SOL</span> <span class="addr-val" id="addr-sol">&mdash;</span></div>
+          <div class="addr-chain"><span class="addr-tag btc">BTC</span> <span class="addr-val" id="addr-btc">&mdash;</span></div>
+          <div class="addr-src" id="addr-src">// CAIP-10 &middot; SIMULATION</div>
         </div>
 
         <div class="stats-list">

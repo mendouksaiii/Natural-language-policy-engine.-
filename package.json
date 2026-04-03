@@ -9,7 +9,7 @@
     "dev": "node --watch server.js"
   },
   "dependencies": {
-    "@open-wallet-standard/core": "^1.2.0",
+    "@open-wallet-standard/core": "^1.2.4",
     "dotenv": "^16.3.1",
     "express": "^4.18.2",
     "ws": "^8.16.0"

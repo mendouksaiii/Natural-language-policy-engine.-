@@ -4,6 +4,7 @@ import { createServer } from 'http';
 import { readFileSync, writeFileSync, existsSync } from 'fs';
 import { join, dirname } from 'path';
 import { fileURLToPath } from 'url';
+import { execSync } from 'child_process';
 import 'dotenv/config';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
@@ -17,9 +18,93 @@ const INITIAL_BALANCE = parseFloat(process.env.INITIAL_BALANCE || '100.00');
 const LLM_PROVIDER = process.env.ANTHROPIC_API_KEY ? 'anthropic'
   : process.env.OPENROUTER_API_KEY ? 'openrouter' : 'simulation';
 
+// ─── OWS Integration ────────────────────────────────────
+let owsAvailable = false;
+let owsWallet = null;
+let owsAccounts = {};
+let ows = {};
+
+async function initOWS() {
+  try {
+    const owsModule = await import('@open-wallet-standard/core');
+    ows = owsModule;
+    owsAvailable = true;
+    console.log('  OWS:     SDK loaded (native Rust FFI)');
+
+    // Check for existing wallet
+    const wallets = ows.listWallets();
+    const existing = wallets.find(w => w.name === 'sentinel-agent');
+
+    if (existing) {
+      owsWallet = existing;
+      console.log(`  Wallet:  Found "${existing.name}" (${existing.id})`);
+    } else {
+      owsWallet = ows.createWallet('sentinel-agent');
+      console.log(`  Wallet:  Created "sentinel-agent" (${owsWallet.id})`);
+    }
+
+    // Parse multi-chain accounts
+    if (owsWallet.accounts) {
+      for (const acct of owsWallet.accounts) {
+        if (acct.chainId.startsWith('eip155')) owsAccounts.evm = acct;
+        else if (acct.chainId.startsWith('solana')) owsAccounts.solana = acct;
+        else if (acct.chainId.startsWith('bip122')) owsAccounts.bitcoin = acct;
+        else if (acct.chainId.startsWith('cosmos')) owsAccounts.cosmos = acct;
+      }
+    }
+
+    const evmAddr = owsAccounts.evm?.address || 'N/A';
+    const solAddr = owsAccounts.solana?.address || 'N/A';
+    const btcAddr = owsAccounts.bitcoin?.address || 'N/A';
+    console.log(`  EVM:     ${evmAddr}`);
+    console.log(`  Solana:  ${solAddr}`);
+    console.log(`  Bitcoin: ${btcAddr}`);
+
+  } catch (err) {
+    console.log(`  OWS:     SDK not available (${err.message})`);
+    console.log('  OWS:     Falling back to simulation mode');
+    owsAvailable = false;
+  }
+}
+
+// ─── MoonPay CLI Bridge ─────────────────────────────────
+let moonpayAvailable = false;
+
+function checkMoonPay() {
+  try {
+    const ver = execSync('moonpay --version 2>/dev/null', { encoding: 'utf-8', timeout: 5000 }).trim();
+    moonpayAvailable = true;
+    console.log(`  MoonPay: CLI v${ver}`);
+    return true;
+  } catch {
+    console.log('  MoonPay: CLI not found');
+    return false;
+  }
+}
+
+function moonpayBalances(address, chain = 'base') {
+  if (!moonpayAvailable) return null;
+  try {
+    const raw = execSync(
+      `moonpay token balance list --wallet "${address}" --chain "${chain}" --json`,
+      { encoding: 'utf-8', timeout: 10000 }
+    );
+    return JSON.parse(raw);
+  } catch { return null; }
+}
+
+function moonpayWalletList() {
+  if (!moonpayAvailable) return [];
+  try {
+    const raw = execSync('moonpay wallet list --json', { encoding: 'utf-8', timeout: 5000 });
+    return JSON.parse(raw);
+  } catch { return []; }
+}
+
 // ─── State ───────────────────────────────────────────────
 let walletState = {
   address: '0x7a3B1c9D...4e5F6a8B',
+  addresses: {},
   balance: INITIAL_BALANCE,
   chain: 'Base',
   lastTransaction: null,
@@ -45,10 +130,55 @@ function broadcast(type, data) {
 wss.on('connection', ws => {
   ws.send(JSON.stringify({
     type: 'init',
-    data: { wallet: walletState, policy: policyText, heartbeat: hbData(), llmProvider: LLM_PROVIDER },
+    data: {
+      wallet: walletState,
+      policy: policyText,
+      heartbeat: hbData(),
+      llmProvider: LLM_PROVIDER,
+      owsStatus: {
+        available: owsAvailable,
+        walletName: owsWallet?.name || null,
+        walletId: owsWallet?.id || null,
+        accounts: owsAccounts,
+        moonpay: moonpayAvailable
+      }
+    },
     timestamp: Date.now()
   }));
 });
+
+// ─── OWS Signing ────────────────────────────────────────
+async function owsSign(tx) {
+  const txSummary = `SENTINEL-TX:${tx.amount}:${tx.recipient}:${tx.purpose}:${Date.now()}`;
+
+  if (owsAvailable && owsWallet) {
+    try {
+      // Sign the transaction summary using OWS SDK
+      const result = ows.signMessage('sentinel-agent', 'evm', txSummary);
+      return {
+        signed: true,
+        txHash: '0x' + result.signature.substring(0, 64),
+        signature: result.signature,
+        recoveryId: result.recoveryId,
+        method: 'ows_sign',
+        wallet: owsWallet.name
+      };
+    } catch (err) {
+      console.error('[OWS] Sign failed:', err.message);
+      // Fall through to simulation
+    }
+  }
+
+  // Simulation fallback
+  await new Promise(r => setTimeout(r, 400));
+  return {
+    signed: true,
+    txHash: '0x' + [...Array(64)].map(() => Math.floor(Math.random() * 16).toString(16)).join(''),
+    signature: null,
+    method: 'simulation',
+    wallet: 'mock'
+  };
+}
 
 // ─── LLM Policy Evaluation ──────────────────────────────
 async function evaluatePolicy(tx) {
@@ -120,12 +250,6 @@ function simulate(tx) {
   return { decision: 'APPROVED', reason: `$${tx.amount.toFixed(2)} for "${tx.purpose}" complies with all policy rules.`, rule_matched: 'Only pay for API services, data feeds, and cloud infrastructure.' };
 }
 
-// ─── Mock OWS ────────────────────────────────────────────
-async function owsSign(tx) {
-  await new Promise(r => setTimeout(r, 400));
-  return { signed: true, txHash: '0x' + [...Array(64)].map(() => Math.floor(Math.random() * 16).toString(16)).join('') };
-}
-
 // ─── Heartbeat ───────────────────────────────────────────
 function hbData() {
   const elapsed = Date.now() - heartbeat.lastApprovedTx;
@@ -137,12 +261,23 @@ async function triggerDeadSwitch() {
   if (heartbeat.isTriggered || walletState.balance <= 0) return;
   heartbeat.isTriggered = true;
   const amount = walletState.balance;
-  const ows = await owsSign({ amount, recipient: BACKUP_WALLET, purpose: 'Dead Agent Switch', chain: 'Base' });
+  const owsResult = await owsSign({ amount, recipient: BACKUP_WALLET, purpose: 'Dead Agent Switch', chain: 'Base' });
 
   walletState.balance = 0;
   walletState.lastTransaction = Date.now();
 
-  const rec = { id: `tx_${Date.now()}`, amount, recipient: BACKUP_WALLET, purpose: 'Dead Agent Switch — Automatic fund recovery', chain: 'Base', decision: 'AUTO-EXECUTED', reason: 'Heartbeat threshold exceeded. Funds routed to backup wallet per policy.', rule_matched: 'If the agent has been inactive for 7 days, send all remaining funds to the backup wallet.', timestamp: new Date().toISOString(), txHash: ows.txHash, isEmergency: true };
+  const rec = {
+    id: `tx_${Date.now()}`, amount, recipient: BACKUP_WALLET,
+    purpose: 'Dead Agent Switch — Automatic fund recovery', chain: 'Base',
+    decision: 'AUTO-EXECUTED',
+    reason: 'Heartbeat threshold exceeded. Funds routed to backup wallet per policy.',
+    rule_matched: 'If the agent has been inactive for 7 days, send all remaining funds to the backup wallet.',
+    timestamp: new Date().toISOString(),
+    txHash: owsResult.txHash,
+    signature: owsResult.signature || null,
+    sigMethod: owsResult.method,
+    isEmergency: true
+  };
 
   walletState.transactions.push(rec);
   broadcast('dead_agent_switch', rec);
@@ -161,7 +296,11 @@ setInterval(() => {
 app.use(express.static(join(__dirname, 'public')));
 app.use(express.json());
 
-app.get('/api/state', (_, res) => res.json({ wallet: walletState, policy: policyText, heartbeat: hbData(), llmProvider: LLM_PROVIDER }));
+app.get('/api/state', (_, res) => res.json({
+  wallet: walletState, policy: policyText, heartbeat: hbData(),
+  llmProvider: LLM_PROVIDER,
+  owsStatus: { available: owsAvailable, walletName: owsWallet?.name, walletId: owsWallet?.id, accounts: owsAccounts, moonpay: moonpayAvailable }
+}));
 
 app.post('/api/policy', (req, res) => {
   policyText = req.body.text;
@@ -177,10 +316,14 @@ app.post('/api/transact', async (req, res) => {
 
   const evaluation = await evaluatePolicy({ amount: parseFloat(amount), recipient: recipient || 'Unknown', purpose, chain: chain || 'Base' });
   let txHash = null;
+  let signature = null;
+  let sigMethod = 'none';
 
   if (evaluation.decision === 'APPROVED') {
-    const ows = await owsSign({ amount: parseFloat(amount), recipient, purpose, chain: chain || 'Base' });
-    txHash = ows.txHash;
+    const owsResult = await owsSign({ amount: parseFloat(amount), recipient, purpose, chain: chain || 'Base' });
+    txHash = owsResult.txHash;
+    signature = owsResult.signature || null;
+    sigMethod = owsResult.method;
     walletState.balance -= parseFloat(amount);
     walletState.totalSpentToday += parseFloat(amount);
     walletState.lastTransaction = Date.now();
@@ -188,13 +331,37 @@ app.post('/api/transact', async (req, res) => {
     heartbeat.isTriggered = false;
   }
 
-  const rec = { id: txId, amount: parseFloat(amount), recipient: recipient || 'Service Provider', purpose, chain: chain || 'Base', ...evaluation, timestamp: new Date().toISOString(), txHash, isEmergency: false };
+  const rec = {
+    id: txId, amount: parseFloat(amount), recipient: recipient || 'Service Provider',
+    purpose, chain: chain || 'Base', ...evaluation,
+    timestamp: new Date().toISOString(), txHash,
+    signature, sigMethod,
+    isEmergency: false
+  };
 
   walletState.transactions.push(rec);
   broadcast('transaction', rec);
   broadcast('wallet_update', walletState);
   broadcast('heartbeat', hbData());
   res.json(rec);
+});
+
+app.get('/api/wallet/balance', async (req, res) => {
+  const chain = req.query.chain || 'base';
+  const addr = owsAccounts.evm?.address;
+  if (!addr) return res.json({ balance: null, source: 'no-wallet' });
+
+  const balances = moonpayBalances(addr, chain);
+  res.json({ address: addr, chain, balances, source: balances ? 'moonpay' : 'unavailable' });
+});
+
+app.get('/api/ows/status', (_, res) => {
+  res.json({
+    available: owsAvailable,
+    wallet: owsWallet ? { name: owsWallet.name, id: owsWallet.id, accounts: owsWallet.accounts } : null,
+    moonpay: moonpayAvailable,
+    moonpayWallets: moonpayWalletList()
+  });
 });
 
 app.post('/api/heartbeat/fast-forward', (_, res) => {
@@ -205,17 +372,46 @@ app.post('/api/heartbeat/fast-forward', (_, res) => {
 });
 
 app.post('/api/reset', (_, res) => {
-  walletState = { address: '0x7a3B1c9D...4e5F6a8B', balance: INITIAL_BALANCE, chain: 'Base', lastTransaction: null, totalSpentToday: 0, transactions: [] };
+  walletState = {
+    address: owsAccounts.evm?.address || '0x7a3B1c9D...4e5F6a8B',
+    addresses: owsAccounts,
+    balance: INITIAL_BALANCE, chain: 'Base',
+    lastTransaction: null, totalSpentToday: 0, transactions: []
+  };
   heartbeat = { lastApprovedTx: Date.now(), thresholdMs: 7 * 24 * 3600000, isTriggered: false };
   policyText = readFileSync(policyPath, 'utf-8');
-  broadcast('init', { wallet: walletState, policy: policyText, heartbeat: hbData(), llmProvider: LLM_PROVIDER });
+  broadcast('init', {
+    wallet: walletState, policy: policyText, heartbeat: hbData(),
+    llmProvider: LLM_PROVIDER,
+    owsStatus: { available: owsAvailable, walletName: owsWallet?.name, walletId: owsWallet?.id, accounts: owsAccounts, moonpay: moonpayAvailable }
+  });
   res.json({ success: true });
 });
 
-server.listen(PORT, () => {
+// ─── Boot ────────────────────────────────────────────────
+async function boot() {
   console.log(`\n  SENTINEL — Natural Language Policy Engine`);
   console.log(`  Extending OWS with human-readable policies\n`);
   console.log(`  Server:  http://localhost:${PORT}`);
   console.log(`  LLM:     ${LLM_PROVIDER}`);
-  console.log(`  Balance: $${INITIAL_BALANCE.toFixed(2)} USDC\n`);
-});
+  console.log(`  Balance: $${INITIAL_BALANCE.toFixed(2)} USDC (simulated)`);
+
+  await initOWS();
+  checkMoonPay();
+
+  // Set wallet address from OWS if available
+  if (owsAccounts.evm) {
+    walletState.address = owsAccounts.evm.address;
+    walletState.addresses = owsAccounts;
+  }
+
+  console.log(`\n  ─────────────────────────────────────`);
+  console.log(`  Mode: ${owsAvailable ? 'OWS LIVE (real signatures)' : 'SIMULATION (mock signatures)'}`);
+  console.log(`  ─────────────────────────────────────\n`);
+
+  server.listen(PORT, () => {
+    console.log(`  Listening on http://localhost:${PORT}\n`);
+  });
+}
+
+boot();
