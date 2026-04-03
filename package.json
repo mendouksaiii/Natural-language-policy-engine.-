@@ -1,0 +1,16 @@
+{
+  "name": "natural-language-policy-engine",
+  "version": "1.0.0",
+  "description": "Natural language policy engine extending OWS — AI agent spending policies in plain English, evaluated by Claude in real time before every ows_sign call",
+  "type": "module",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node --watch server.js"
+  },
+  "dependencies": {
+    "express": "^4.18.2",
+    "ws": "^8.16.0",
+    "dotenv": "^16.3.1"
+  }
+}

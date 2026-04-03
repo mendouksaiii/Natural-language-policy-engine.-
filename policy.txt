@@ -1,0 +1,10 @@
+AGENT SPENDING POLICY
+=====================
+
+1. Only pay for API services, data feeds, and cloud infrastructure.
+2. Never spend more than $20 on a single transaction.
+3. Never transact on weekends (Saturday or Sunday).
+4. Total daily spending must not exceed $50.
+5. Only transact on the Base network.
+6. Never send funds to unverified or unknown wallet addresses.
+7. If the agent has been inactive for 7 days, send all remaining funds to the backup wallet 0xBACKUP...SAFE.
