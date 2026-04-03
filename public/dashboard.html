@@ -6,13 +6,28 @@
   <title>SENTINEL — Natural Language Policy Engine | OWS</title>
   <meta name="description" content="AI agent spending policies in plain English, evaluated in real time before every ows_sign call.">
   <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@300;400;500;600&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@300;400;500;600&family=DM+Sans:wght@400;500;600&family=Orbitron:wght@700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
-  <div class="bg-grid"></div>
-  <div class="bg-glow bg-glow-1"></div>
-  <div class="bg-glow bg-glow-2"></div>
+  <!-- SPLASH SCREEN -->
+  <div id="splash-screen">
+    <div id="splash-content">
+      <div id="splash-logo">
+        <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+          <polygon points="50 5, 95 25, 95 75, 50 95, 5 75, 5 25" fill="none" stroke="#ff4500" stroke-width="4" />
+        </svg>
+      </div>
+      <div id="splash-wordmark"></div>
+      <div id="splash-subtitle">AGENT SPEND GOVERNANCE // OWS PROTOCOL</div>
+      <div id="splash-boot-text"></div>
+    </div>
+  </div>
+
+  <div id="dashboard-wrapper" style="opacity: 0; transition: opacity 0.3s ease-in; pointer-events: none;">
+    <div class="bg-grid"></div>
+    <div class="bg-glow bg-glow-1"></div>
+    <div class="bg-glow bg-glow-2"></div>
 
   <header id="header">
     <div class="header-left">
@@ -139,6 +154,7 @@
       <button class="btn-submit" id="btn-submit-custom">Send Through Policy Engine</button>
     </div>
   </div>
+  </div> <!-- // END dashboard wrapper -->
 
   <script src="app.js"></script>
 </body>

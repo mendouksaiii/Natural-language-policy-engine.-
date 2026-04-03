@@ -319,3 +319,69 @@ document.addEventListener('keydown', e => {
 
 // ─── Boot ────────────────────────────────────────────────
 connect();
+
+function runSplashSequence() {
+  const splash = $('splash-screen');
+  const dash = $('dashboard-wrapper');
+  if (!splash || !dash) return;
+
+  const logo = $('splash-logo');
+  const wordmark = $('splash-wordmark');
+  const subtitle = $('splash-subtitle');
+  const bootText = $('splash-boot-text');
+
+  // Step 2: Logo fades in at 0.8s
+  setTimeout(() => { logo.style.opacity = '1'; }, 800);
+
+  // Step 3: Wordmark types in at 1.6s
+  setTimeout(() => {
+    const text = 'ANTIGRAVITY';
+    let i = 0;
+    const typeInt = setInterval(() => {
+      wordmark.textContent += text[i];
+      i++;
+      if (i >= text.length) clearInterval(typeInt);
+    }, 80);
+  }, 1600);
+
+  // Step 4: Subtitle fades in at 2.6s
+  setTimeout(() => { subtitle.style.opacity = '1'; }, 2600);
+
+  // Step 5: System Boot text starts at 3.2s
+  setTimeout(() => {
+    const lines = [
+      'INITIALIZING OWS VAULT...............<span class="boot-ok">OK</span>',
+      'LOADING POLICY ENGINE................<span class="boot-ok">OK</span>',
+      'CONNECTING MOONPAY CLI...............<span class="boot-ok">OK</span>',
+      'ARMING DEAD AGENT SWITCH.............<span class="boot-ok">OK</span>',
+      'AGENT WALLET FUNDED..................<span class="boot-ok">OK</span>'
+    ];
+    let i = 0;
+    const bootInt = setInterval(() => {
+      const lineSpan = document.createElement('span');
+      lineSpan.className = 'boot-line';
+      lineSpan.innerHTML = lines[i];
+      bootText.appendChild(lineSpan);
+      
+      // Trigger CSS transition
+      setTimeout(() => lineSpan.style.opacity = '1', 20);
+      
+      i++;
+      if (i >= lines.length) clearInterval(bootInt);
+    }, 200);
+  }, 3200);
+
+  // Step 6: Transition Out at 4.5s (fully gone by 4.8s)
+  setTimeout(() => {
+    // Fade out splash
+    splash.style.opacity = '0';
+    // Fade in dashboard
+    dash.style.opacity = '1';
+    dash.style.pointerEvents = 'auto';
+    
+    // Clean up DOM
+    setTimeout(() => { splash.remove(); }, 300);
+  }, 4500);
+}
+
+document.addEventListener('DOMContentLoaded', runSplashSequence);
