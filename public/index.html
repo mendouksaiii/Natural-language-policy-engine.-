@@ -3,75 +3,284 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>SENTINEL | Natural Language Policy Engine</title>
-  <link rel="stylesheet" href="landing.css">
+  <title>SENTINEL — Natural Language Policy Engine</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Rajdhani:wght@400;600;700&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
 </head>
 <body>
-  <div class="noise"></div>
-  <div class="grid-bg"></div>
 
-  <nav>
-    <div class="brand">SENTINEL</div>
-    <a href="https://openwallet.sh" target="_blank" class="nav-link">Build with OWS</a>
-  </nav>
-
-  <main class="hero">
-    <h1 class="hero-title">
-      <span class="word-box"><span class="word-text">PLAIN</span></span><br>
-      <span class="word-box"><span class="word-text">ENGLISH.</span></span><br>
-      <span class="word-box"><span class="word-text">NOT JSON.</span></span>
-    </h1>
-
-    <p class="hero-desc">
-      Extending the Open Wallet Standard. Let Claude intercept and evaluate every transaction request against human-readable intent before touching your private keys.
-    </p>
-
-    <div class="cta-wrapper">
-      <a href="/dashboard.html" class="btn-launch">
-        <span>Enter Demo</span> <span class="btn-arrow">→</span>
-      </a>
+  <!-- ========================================== -->
+  <!-- 1. LANDING PAGE VIEW                       -->
+  <!-- ========================================== -->
+  <div id="view-landing">
+    <!-- Hero Block -->
+    <div class="hero">
+      <div class="hero-logo">
+        <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+          <polygon points="50 5, 95 25, 95 75, 50 95, 5 75, 5 25" fill="none" stroke="currentColor" stroke-width="4" />
+        </svg>
+      </div>
+      <h1 class="hero-title">SENTINEL</h1>
+      <div class="hero-subtitle">AGENT SPEND GOVERNANCE // OWS PROTOCOL</div>
+      <div class="hero-tagline">Plain English, Not JSON.</div>
+      <div class="scroll-ind">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
+        <span>SCROLL TO READ</span>
+      </div>
     </div>
 
-    <section class="split-view">
-      <div class="split-col">
-        <div class="split-header">
-          <span>The Old Primitive</span>
-          <span>Rigid</span>
-        </div>
-        <div class="code-block cross">
+    <!-- Content Sections -->
+    <div class="landing-content">
+      <p class="body-text">
+        AI agents are getting their own wallets. They are going to spend money autonomously — paying for APIs, buying compute, subscribing to data feeds, and transacting on-chain over the next decade.
+      </p>
+      <p class="body-text">
+        The Open Wallet Standard (OWS), pioneered by MoonPay, is building the infrastructure for this reality. It provides a secure, universal way for agents to interact with blockchain wallets without ever holding the private keys. But as we transition into this agentic economy, a critical question arises: <b>Who controls what the agent can spend, and how?</b>
+      </p>
+      <p class="body-text">
+        Right now, the answer is developers writing code.
+      </p>
+
+      <div class="section-divider"><div class="sec-header"></div></div>
+      <h3 class="heading-3">The Problem with Config Files</h3>
+
+      <p class="body-text">
+        OWS ships with a pre-signing policy engine. Before any key is touched, the engine evaluates the requested transaction against configured rules. It works perfectly, but it is rigid. A standard spending policy today looks like this:
+      </p>
+
+      <div class="code-block">
 {
   "max_spend_usd": 20,
   "allowed_chains": ["base"],
   "blocked_days": [0, 6]
 }
-<br><br>
-// Fails completely on nuance.
-        </div>
       </div>
-      
-      <div class="split-col">
-        <div class="split-header">
-          <span style="color: var(--accent);">The New Sentinel</span>
-          <span>Nuanced</span>
-        </div>
-        <div class="code-block highlight">
-1. Never spend more than $20.<br>
-2. Unless it's emergency cloud infrastructure.<br>
-3. If silent for 7 days, trigger the Dead Agent Switch.
-<br><br>
-# Claude evaluates intent. Wallet obeys.
-        </div>
-      </div>
-    </section>
-  </main>
 
-  <script>
-    // Parallax effect on grid
-    document.addEventListener('mousemove', (e) => {
-      const x = (e.clientX / window.innerWidth - 0.5) * 20;
-      const y = (e.clientY / window.innerHeight - 0.5) * 20;
-      document.querySelector('.grid-bg').style.transform = `translate(${x}px, ${y}px)`;
-    });
-  </script>
+      <p class="body-text">
+        If an operator wants to change a spending limit from $20 to $50, they have to file a ticket. A developer edits a config file, and it goes through a deployment cycle.
+      </p>
+      <p class="body-text">
+        Furthermore, config files are binary — they completely fail on nuance. You cannot easily write a JSON rule that says: "Never spend more than $20 on a single transaction, unless it's for emergency cloud infrastructure."
+      </p>
+      <p class="body-text">
+        If the whole point of AI agents is autonomy, the rules governing that autonomy shouldn't be locked behind rigid technical implementation.
+      </p>
+
+      <div class="section-divider"><div class="sec-header"></div></div>
+      <h3 class="heading-3">Enter SENTINEL: The Natural Language Policy Engine</h3>
+
+      <p class="body-text">
+        For the OWS Hackathon, we built SENTINEL — an extension to OWS that replaces config files and code with plain English.
+      </p>
+      <p class="body-text">
+        With SENTINEL, your agent's spending policy is literally a document:
+      </p>
+
+      <div class="blockquote">
+        AGENT SPENDING POLICY<br>
+        1. Only pay for API services, data feeds, and cloud infrastructure.<br>
+        2. Never spend more than $20 on a single transaction.<br>
+        3. Total daily spending must not exceed $50.<br>
+        4. If the agent goes entirely silent for 7 days, trigger the dead agent switch and send all remaining funds to the backup wallet.
+      </div>
+
+      <p class="body-text">
+        Every time the agent wants to spend, it gets stopped by the policy engine. But instead of parsing a JSON file, the engine bundles the transaction details with your plain text policy and hands them to Claude (LLM).
+      </p>
+      <p class="body-text">
+        Claude evaluates the intent of the transaction against the English rules. It responds with an APPROVED or REJECTED decision, citing the exact rule it followed. Only a definitive "Yes" from Claude unlocks the wallet to call ows_sign.
+      </p>
+
+      <div class="section-divider"><div class="sec-header"></div></div>
+      <h3 class="heading-3">Nuance, Speed, and the Dead Agent Switch</h3>
+
+      <p class="body-text">
+        This architectural shift unlocks three massive benefits:
+      </p>
+
+      <div class="feature-row">
+        <div class="feature-card">
+          <div class="card-label">ACCESSIBILITY</div>
+          <div class="card-text">The person who understands the business rules — the founder, the treasury manager — can write and edit the policy themselves. Change a sentence, hit save, the agent updates on the next transaction.</div>
+        </div>
+        <div class="feature-card">
+          <div class="card-label">CONTEXTUAL NUANCE</div>
+          <div class="card-text">A config file blocks $20.01 universally. Claude understands intent. "Only on weekdays, but allow weekends if our server goes down" is a completely valid rule SENTINEL can enforce without complex logic trees.</div>
+        </div>
+        <div class="feature-card">
+          <div class="card-label">DEAD AGENT SWITCH</div>
+          <div class="card-text">By simply writing "If inactive for 7 days, send funds to backup" in the policy document, the engine's background heartbeat safely executes an auto-recovery transaction. No secondary monitoring system needed.</div>
+        </div>
+      </div>
+
+      <div class="section-divider"><div class="sec-header"></div></div>
+      <h3 class="heading-3">Extending the Primitive</h3>
+
+      <p class="body-text">
+        SENTINEL isn't a wrapper around OWS — it's an extension of its most important primitive. The policy engine is the soul of the standard. It is what stands between an autonomous machine and your money.
+      </p>
+      <p class="body-text">
+        By upgrading that engine to understand natural language, we ensure that as AI agents become more sophisticated, our ability to control and guide them remains human.
+      </p>
+    </div>
+
+    <!-- CTA & Footer -->
+    <div class="cta-block">
+      <div class="cta-label">BUILT FOR OWS BUIDLHACK 2026</div>
+      <div class="cta-title">See It Running.</div>
+      <div class="cta-sub">Watch Claude police agent transactions in real time.</div>
+      <button class="btn-cta" id="btn-enter-dash">ENTER DASHBOARD &rarr;</button>
+    </div>
+
+    <footer>
+      SENTINEL // OWS BUIDLHACK 2026 // AGENT SPEND GOVERNANCE
+    </footer>
+  </div>
+
+  <!-- ========================================== -->
+  <!-- 2. DASHBOARD VIEW                          -->
+  <!-- ========================================== -->
+  <div id="view-dashboard" style="display: none; opacity: 0;">
+    
+    <header class="dash-header">
+      <div class="dh-left">
+        <svg width="28" height="28" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg" stroke="#f97316" fill="none" stroke-width="8">
+          <polygon points="50 5, 95 25, 95 75, 50 95, 5 75, 5 25"/>
+        </svg>
+        <div class="dh-title-wrap">
+          <div class="dh-title">SENTINEL</div>
+          <div class="dh-sub">AGENT SPEND GOVERNANCE // OWS PROTOCOL</div>
+        </div>
+      </div>
+      <div class="dh-center">
+        <button id="btn-back" class="btn-link">&larr; BACK</button>
+      </div>
+      <div class="dh-right">
+        <span class="badge">ETHEREUM</span>
+        <span class="badge">SOLANA</span>
+        <span class="badge badge-dim">OWS v1.0</span>
+        <span class="badge-pill"><span class="dot"></span>AGENT LIVE</span>
+      </div>
+    </header>
+
+    <main class="dash-grid">
+      <!-- PANEL 1: AGENT VAULT -->
+      <section class="panel p-vault">
+        <div class="p-title">AGENT VAULT</div>
+        <div class="p-tag">~/.ows/wallets/</div>
+
+        <div class="bal-box">
+          <div class="lbl">TOTAL BALANCE</div>
+          <div class="amt-row">
+            <span class="amt-val" id="bal">100.00</span>
+            <span class="amt-cur">USDC</span>
+          </div>
+          <div class="amt-change">&minus; <span id="w-today">0.00</span> TODAY</div>
+        </div>
+
+        <div class="w-addr-box">
+          <div class="lbl">AGENT ADDRESS</div>
+          <div class="val">0x7a3b...6a8b<br>// EVM CAIP-10</div>
+        </div>
+
+        <div class="stats-list">
+          <div class="stat-row">
+            <div class="lbl">TX APPROVED</div>
+            <div class="val green" id="tx-app">0</div>
+          </div>
+          <div class="stat-row">
+            <div class="lbl">TX REJECTED</div>
+            <div class="val red" id="tx-rej">0</div>
+          </div>
+          <div class="stat-row">
+            <div class="lbl">SPENT TODAY</div>
+            <div class="val orange" id="tx-spent">$0.00</div>
+          </div>
+          <div class="stat-row">
+            <div class="lbl">POLICY VER</div>
+            <div class="val white">v3.1</div>
+          </div>
+          <div class="stat-row">
+            <div class="lbl">LAST TX</div>
+            <div class="val white" id="w-last">&mdash;</div>
+          </div>
+        </div>
+
+        <div class="das-block">
+          <div class="p-title amber">DEAD AGENT SWITCH</div>
+          <div class="das-bar-bg"><div class="das-bar-fill" id="hb-fill"></div></div>
+          <div class="das-timer" id="hb-timer">168:00:00</div>
+          <div class="das-sub">UNTIL SUCCESSION FIRES</div>
+        </div>
+      </section>
+
+      <!-- PANEL 2: CENTER COLUMN (POLICY & FEED) -->
+      <section class="panel-col center-col">
+        <!-- POLICY DOCUMENT -->
+        <div class="panel p-policy">
+          <div class="p-head">
+            <div>
+              <div class="p-title">POLICY DOCUMENT</div>
+              <div class="p-tag">LIVE EDITABLE // NL ENGINE</div>
+            </div>
+          </div>
+          <textarea id="policy-editor" spellcheck="false"></textarea>
+          <div class="pol-foot">
+            <div class="pol-status"><span class="dot green"></span><span id="rule-count-lbl">7 RULES ACTIVE</span></div>
+            <button class="btn-push" id="btn-save">PUSH POLICY</button>
+          </div>
+        </div>
+
+        <!-- TRANSACTION FEED -->
+        <div class="panel p-feed" id="p-feed">
+          <div class="p-head">
+            <div>
+              <div class="p-title">TRANSACTION FEED</div>
+              <div class="p-tag">OWS INTERCEPT // REALTIME</div>
+            </div>
+            <div class="p-tag right" id="tx-count">0 RECORDS</div>
+          </div>
+          <div class="feed-scroll" id="tx-feed">
+            <div class="feed-empty">NO ACTIVITY. AWAITING AGENT TX.</div>
+          </div>
+        </div>
+      </section>
+
+      <!-- PANEL 3: RIGHT COLUMN (CONTROLS & ENGINE) -->
+      <section class="panel p-controls">
+        <div class="p-title">SIMULATION COM DEV</div>
+        <div class="p-tag">MANUAL AGENT IMPULSE</div>
+        
+        <div class="sim-grid">
+          <button class="sim-btn" data-amount="15" data-purpose="Cloud AI inference tier" data-recipient="OpenRouter">
+            <div class="s-amt">$15.00</div>
+            <div class="s-desc">API SERVICE</div>
+          </button>
+          <button class="sim-btn" data-amount="8" data-purpose="Market data pipeline feed" data-recipient="Tenero API">
+            <div class="s-amt">$8.00</div>
+            <div class="s-desc">DATA FEED</div>
+          </button>
+          <button class="sim-btn bad" data-amount="45" data-purpose="Rare NFT avatar purchase" data-recipient="Magiceden">
+            <div class="s-amt">$45.00</div>
+            <div class="s-desc">NFT MINT</div>
+          </button>
+          <button class="sim-btn bad" data-amount="25" data-purpose="Cloud server rental fee" data-recipient="AWS">
+            <div class="s-amt">$25.00</div>
+            <div class="s-desc">OVER LIMIT</div>
+          </button>
+        </div>
+
+        <div class="p-title mt-4">CLAUDE DECISION ENGINE</div>
+        <div class="p-tag">LLM REASONING LOOP</div>
+        <div class="llm-feed" id="llm-feed">
+          <div class="feed-empty">ENGINE STANDBY</div>
+        </div>
+      </section>
+
+    </main>
+  </div>
+  
+  <script src="app.js"></script>
 </body>
 </html>

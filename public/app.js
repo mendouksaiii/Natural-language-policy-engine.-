@@ -1,23 +1,58 @@
-// ─── State ───────────────────────────────────────────────
+// ─── DOM Routing ─────────────────────────────────────────
+const viewLanding = document.getElementById('view-landing');
+const viewDashboard = document.getElementById('view-dashboard');
+const btnEnter = document.getElementById('btn-enter-dash');
+const btnBack = document.getElementById('btn-back');
+
+function showDashboard() {
+  viewLanding.style.opacity = '0';
+  setTimeout(() => {
+    viewLanding.style.display = 'none';
+    viewDashboard.style.display = 'flex';
+    // Small delay to allow display flex to apply before transitioning opacity
+    requestAnimationFrame(() => {
+      viewDashboard.style.opacity = '1';
+    });
+  }, 300);
+}
+
+function showLanding() {
+  viewDashboard.style.opacity = '0';
+  setTimeout(() => {
+    viewDashboard.style.display = 'none';
+    viewLanding.style.display = 'block';
+    requestAnimationFrame(() => {
+      viewLanding.style.opacity = '1';
+    });
+  }, 300);
+}
+
+btnEnter.addEventListener('click', showDashboard);
+btnBack.addEventListener('click', showLanding);
+
+// ─── Dashboard State ─────────────────────────────────────
 let ws;
 let isProcessing = false;
 
-// ─── DOM refs ────────────────────────────────────────────
+// DOM Refs
 const $ = id => document.getElementById(id);
 const bal = $('bal');
-const wAddr = $('w-addr');
-const wLast = $('w-last');
 const wToday = $('w-today');
-const walletTag = $('wallet-tag');
+const wLast = $('w-last');
+const txApp = $('tx-app');
+const txRej = $('tx-rej');
+const txSpent = $('tx-spent');
+
+const hbTimer = $('hb-timer');
+const hbFill = $('hb-fill');
+
 const policyEditor = $('policy-editor');
+const ruleCountLbl = $('rule-count-lbl');
+const btnSave = $('btn-save');
+
 const txFeed = $('tx-feed');
 const txCount = $('tx-count');
-const hbDays = $('hb-days');
-const hbRing = $('hb-ring');
-const hbLast = $('hb-last');
-const hbTag = $('hb-tag');
-const llmText = $('llm-text');
-const llmBadge = $('llm-badge');
+const llmFeed = $('llm-feed');
 
 // ─── WebSocket ───────────────────────────────────────────
 function connect() {
@@ -28,12 +63,15 @@ function connect() {
     const { type, data } = JSON.parse(e.data);
     switch (type) {
       case 'init': initState(data); break;
-      case 'wallet_update': updateWallet(data); break;
+      case 'wallet_update': updateWallet(data); updateStats(data); break;
       case 'transaction': addTransaction(data); break;
       case 'heartbeat': updateHeartbeat(data); break;
-      case 'policy_updated': policyEditor.value = data.text; flashSave(); break;
-      case 'evaluating': addEvaluating(data); break;
-      case 'dead_agent_switch': onDeadSwitch(data); break;
+      case 'policy_updated': 
+        policyEditor.value = data.text; 
+        updateRuleCount(data.text);
+        flashSave(true); 
+        break;
+      case 'evaluating': addEvaluating(data); logLLM(`EVALUATING TX:\n{ amount: ${data.amount}, purpose: "${data.purpose}" }\nReasoning loop initiated...`); break;
     }
   };
 
@@ -44,27 +82,25 @@ function connect() {
 // ─── Init ────────────────────────────────────────────────
 function initState(data) {
   updateWallet(data.wallet);
+  updateStats(data.wallet);
   policyEditor.value = data.policy;
+  updateRuleCount(data.policy);
   updateHeartbeat(data.heartbeat);
 
-  // Show LLM provider
-  const prov = data.llmProvider || 'simulation';
-  const labels = { anthropic: 'Claude (Direct)', openrouter: 'Claude (OpenRouter)', simulation: 'Simulation Mode' };
-  llmText.textContent = labels[prov] || prov;
-  if (prov === 'simulation') {
-    llmBadge.querySelector('.badge-dot').style.background = 'var(--amber)';
-  }
-
-  // Rebuild transaction log
   txFeed.innerHTML = '';
   if (data.wallet.transactions && data.wallet.transactions.length > 0) {
     data.wallet.transactions.forEach(tx => addTransaction(tx, false));
   } else {
-    txFeed.innerHTML = '<div class="tx-empty"><div class="tx-empty-ico">⏳</div><p>No transactions yet. Use the controls below to simulate agent spending.</p></div>';
+    txFeed.innerHTML = '<div class="feed-empty">NO ACTIVITY. AWAITING AGENT TX.</div>';
   }
 }
 
-// ─── Wallet ──────────────────────────────────────────────
+function updateRuleCount(text) {
+  const rules = text.split('\n').filter(l => l.trim().length > 5).length;
+  ruleCountLbl.textContent = `${rules} RULES ACTIVE`;
+}
+
+// ─── Wallet & Stats ──────────────────────────────────────
 function updateWallet(w) {
   const prev = parseFloat(bal.textContent);
   bal.textContent = w.balance.toFixed(2);
@@ -72,244 +108,200 @@ function updateWallet(w) {
     bal.classList.add('flash');
     setTimeout(() => bal.classList.remove('flash'), 500);
   }
+}
 
-  wToday.textContent = `$${(w.totalSpentToday || 0).toFixed(2)}`;
-  if (w.lastTransaction) {
-    wLast.textContent = timeAgo(w.lastTransaction);
+function updateStats(w) {
+  let appOpts = 0; let rejOpts = 0; let spent = 0;
+  if(w.transactions) {
+    w.transactions.forEach(t => {
+      if(t.decision === 'APPROVED' || t.isEmergency) appOpts++;
+      if(t.decision === 'REJECTED') rejOpts++;
+      if((t.decision === 'APPROVED' || t.isEmergency) && t.amount) spent += t.amount;
+    });
   }
-
-  // Wallet tag
-  if (w.balance <= 0) {
-    walletTag.textContent = 'EMPTY';
-    walletTag.className = 'tag tag-danger';
-  } else if (w.balance < 20) {
-    walletTag.textContent = 'LOW';
-    walletTag.className = 'tag tag-warn';
-  } else {
-    walletTag.textContent = 'FUNDED';
-    walletTag.className = 'tag';
+  
+  txApp.textContent = appOpts;
+  txRej.textContent = rejOpts;
+  txSpent.textContent = `$${spent.toFixed(2)}`;
+  wToday.textContent = spent.toFixed(2);
+  
+  if (w.lastTransaction) {
+    wLast.textContent = timeAgo(w.lastTransaction).toUpperCase();
   }
 }
 
 // ─── Transactions ────────────────────────────────────────
+function logLLM(msg) {
+  const empty = llmFeed.querySelector('.feed-empty');
+  if(empty) empty.remove();
+  
+  const div = document.createElement('div');
+  div.className = 'llm-msg';
+  div.innerHTML = `<span class="llm-label">></span> ${msg}`;
+  llmFeed.appendChild(div);
+  llmFeed.scrollTop = llmFeed.scrollHeight;
+}
+
 function addEvaluating(data) {
-  clearEmpty();
+  clearEmptyFeed();
   const card = document.createElement('div');
-  card.className = 'tx-card evaluating';
+  card.className = 'tx-item eval';
   card.id = `card-${data.txId}`;
   card.innerHTML = `
-    <div class="tx-top">
-      <span class="tx-badge evaluating">⏳ EVALUATING...</span>
+    <div class="tx-header">
+      <span class="tx-badge eval">EVAL</span>
       <span class="tx-time">${new Date().toLocaleTimeString()}</span>
     </div>
-    <div class="tx-purpose">${data.purpose} — $${parseFloat(data.amount).toFixed(2)}</div>
-    <div class="tx-reason" style="color:var(--amber)">Policy engine is reading the transaction and checking against your rules...</div>
+    <div class="tx-desc">${data.purpose} <span class="tx-amt">$${parseFloat(data.amount).toFixed(2)}</span></div>
+    <div class="tx-reason">CLAUDE EVALUATING AGAINST POLICY...</div>
   `;
   txFeed.prepend(card);
-  animateFlow('evaluating');
 }
 
 function addTransaction(tx, animate = true) {
-  clearEmpty();
-  // Remove evaluating card if exists
+  clearEmptyFeed();
   const existing = document.getElementById(`card-${tx.id}`);
   if (existing) existing.remove();
 
-  const cls = tx.isEmergency ? 'emergency' : tx.decision === 'APPROVED' ? 'approved' : 'rejected';
-  const icon = tx.isEmergency ? '🚨' : tx.decision === 'APPROVED' ? '✅' : '❌';
-  const label = tx.isEmergency ? 'AUTO-EXECUTED' : tx.decision;
-  const time = new Date(tx.timestamp).toLocaleTimeString();
+  const isApp = tx.decision === 'APPROVED';
+  const isRej = tx.decision === 'REJECTED';
+  const isSys = tx.isEmergency;
+  
+  let cls = isRej ? 'rej' : isSys ? 'sys' : 'app';
+  let badgeTxt = isRej ? 'REJ' : isSys ? 'SYS' : 'APP';
+  
+  if (animate) {
+    logLLM(`DECISION: ${tx.decision}\nREASON: ${tx.reason}`);
+  }
+
+  const timeStr = new Date(tx.timestamp).toLocaleTimeString();
 
   const card = document.createElement('div');
-  card.className = `tx-card ${cls}`;
-  if (!animate) card.style.animation = 'none';
-
+  card.className = `tx-item ${cls}`;
+  
   card.innerHTML = `
-    <div class="tx-top">
-      <span class="tx-badge ${cls}">${icon} ${label}</span>
-      <span class="tx-time">${time}</span>
+    <div class="tx-header">
+      <span class="tx-badge ${cls}">${badgeTxt}</span>
+      <span class="tx-time">${timeStr}</span>
     </div>
-    <div class="tx-purpose">${tx.purpose} — $${tx.amount.toFixed(2)}</div>
+    <div class="tx-desc">${tx.purpose || 'SYS RECOVERY'} <span class="tx-amt">$${tx.amount.toFixed(2)}</span></div>
     <div class="tx-reason">${tx.reason}</div>
-    ${tx.rule_matched ? `<div class="tx-rule">📌 ${tx.rule_matched}</div>` : ''}
-    ${tx.txHash ? `<div class="tx-rule" style="color:var(--text2)">TX: ${tx.txHash.slice(0, 18)}...</div>` : ''}
+    ${tx.txHash ? `<div class="tx-hash">HASH: ${tx.txHash.substring(0, 16)}...</div>` : ''}
   `;
 
   txFeed.prepend(card);
-  const count = txFeed.querySelectorAll('.tx-card').length;
-  txCount.textContent = `${count} transaction${count !== 1 ? 's' : ''}`;
-
-  if (animate) animateFlow(cls);
+  
+  const count = txFeed.querySelectorAll('.tx-item').length;
+  txCount.textContent = `${count} RECORDS`;
 }
 
-function clearEmpty() {
-  const empty = txFeed.querySelector('.tx-empty');
+function clearEmptyFeed() {
+  const empty = txFeed.querySelector('.feed-empty');
   if (empty) empty.remove();
 }
 
 // ─── Heartbeat ───────────────────────────────────────────
 function updateHeartbeat(hb) {
-  const daysIdle = Math.min(7, hb.elapsed / (24 * 3600000));
-  hbDays.textContent = daysIdle.toFixed(daysIdle < 1 ? 2 : 1);
-
-  const pct = Math.min(1, hb.elapsed / hb.threshold);
-  const circumference = 2 * Math.PI * 88;
-  hbRing.style.strokeDashoffset = circumference * (1 - pct);
-
-  hbRing.classList.remove('warn', 'danger', 'triggered');
-  hbTag.className = 'tag tag-active';
-
-  if (hb.status === 'TRIGGERED') {
-    hbRing.classList.add('triggered');
-    hbTag.textContent = 'TRIGGERED';
-    hbTag.className = 'tag tag-emergency';
-  } else if (hb.status === 'CRITICAL') {
-    hbRing.classList.add('danger');
-    hbTag.textContent = 'CRITICAL';
-    hbTag.className = 'tag tag-danger';
-  } else if (hb.status === 'WARNING') {
-    hbRing.classList.add('warn');
-    hbTag.textContent = 'WARNING';
-    hbTag.className = 'tag tag-warn';
-  } else {
-    hbTag.textContent = 'ACTIVE';
-    hbTag.className = 'tag';
+  const thresholdDays = hb.threshold / (24 * 3600000);
+  const elapsedDays = Math.min(thresholdDays, hb.elapsed / (24 * 3600000));
+  const remainingMs = hb.threshold - hb.elapsed;
+  
+  if (remainingMs <= 0 || hb.status === 'TRIGGERED') {
+    hbTimer.textContent = "00:00:00";
+    hbTimer.className = 'das-timer danger';
+    hbFill.style.width = '0%';
+    hbFill.style.background = 'var(--red)';
+    hbFill.style.boxShadow = '0 0 8px var(--red)';
+    document.querySelector('.das-block').style.borderColor = 'var(--red)';
+    return;
   }
 
-  hbLast.textContent = timeAgo(hb.lastActivity);
+  // Format countdown HH:MM:SS
+  const formatTime = (ms) => {
+    let totalSecs = Math.floor(ms / 1000);
+    let h = Math.floor(totalSecs / 3600);
+    let m = Math.floor((totalSecs % 3600) / 60);
+    let s = totalSecs % 60;
+    return `${h.toString().padStart(3, '0')}:${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
+  };
+
+  hbTimer.textContent = formatTime(remainingMs);
+  
+  const pct = Math.max(0, (remainingMs / hb.threshold) * 100);
+  hbFill.style.width = pct + '%';
+  
+  if (hb.status === 'CRITICAL' || remainingMs < 30 * 60 * 1000) {
+    hbTimer.className = 'das-timer danger';
+    hbFill.style.background = 'var(--red)';
+    hbFill.style.boxShadow = '0 0 8px var(--red)';
+  } else {
+    hbTimer.className = 'das-timer';
+    hbFill.style.background = 'var(--amber)';
+    hbFill.style.boxShadow = '0 0 8px var(--amber)';
+  }
 }
 
-function onDeadSwitch(tx) {
-  // Dramatic effect
-  document.body.style.transition = 'background 0.5s';
-  document.body.style.background = '#1a0505';
-  setTimeout(() => { document.body.style.background = ''; }, 2000);
-}
-
-// ─── Flow Diagram Animation ─────────────────────────────
-function animateFlow(result) {
-  const nodes = ['fn-engine', 'fn-llm', 'fn-ows'];
-  const arrows = ['fa1', 'fa2', 'fa3'];
-  const color = result === 'approved' ? 'lit-green' : result === 'rejected' ? 'lit-red' : '';
-
-  // Reset
-  nodes.forEach(n => { $(n).className = 'flow-node'; });
-  arrows.forEach(a => { $(a).className = 'flow-arrow'; });
-
-  // Animate step by step
-  setTimeout(() => { $(arrows[0]).classList.add('lit'); $(nodes[0]).classList.add('active'); }, 100);
-  setTimeout(() => { $(arrows[1]).classList.add('lit'); $(nodes[1]).classList.add('active'); }, 400);
-  setTimeout(() => {
-    $(arrows[2]).classList.add('lit');
-    $(nodes[2]).classList.add(color || 'active');
-    if (color) { $(nodes[1]).className = `flow-node ${color}`; $(nodes[0]).className = `flow-node ${color}`; }
-  }, 700);
-
-  // Clear after 3s
-  setTimeout(() => {
-    nodes.forEach(n => { $(n).className = 'flow-node'; });
-    arrows.forEach(a => { $(a).className = 'flow-arrow'; });
-  }, 3000);
-}
-
-// ─── API calls ───────────────────────────────────────────
-async function sendTransaction(amount, purpose, recipient, chain) {
+// ─── Actions ─────────────────────────────────────────────
+async function sendTransaction(amount, purpose, recipient) {
   if (isProcessing) return;
   isProcessing = true;
-  disableButtons(true);
 
   try {
     await fetch('/api/transact', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ amount, purpose, recipient: recipient || 'Service Provider', chain: chain || 'Base' })
+      body: JSON.stringify({ amount, purpose, recipient, chain: 'Base' })
     });
-  } catch (e) {
-    console.error('Transaction error:', e);
-  }
-
+  } catch (e) { console.error(e); }
   isProcessing = false;
-  disableButtons(false);
 }
 
 async function savePolicy() {
   const text = policyEditor.value;
+  btnSave.textContent = "PUSHING...";
+  btnSave.classList.add('pushing');
+  
   try {
     await fetch('/api/policy', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ text })
     });
-    flashSave();
-  } catch (e) { console.error('Policy save error:', e); }
+  } catch (e) { 
+    console.error(e); 
+    btnSave.textContent = "ERROR";
+    btnSave.classList.remove('pushing');
+  }
 }
 
-async function fastForward() {
-  $('btn-ff').disabled = true;
-  $('btn-ff').textContent = '⏩ Forwarding...';
-  try {
-    await fetch('/api/heartbeat/fast-forward', { method: 'POST' });
-  } catch (e) { console.error('Fast forward error:', e); }
-  setTimeout(() => {
-    $('btn-ff').disabled = false;
-    $('btn-ff').textContent = '⏩ Fast Forward 7 Days';
-  }, 4000);
-}
-
-async function resetDemo() {
-  try {
-    await fetch('/api/reset', { method: 'POST' });
-  } catch (e) { console.error('Reset error:', e); }
-}
-
-// ─── Helpers ─────────────────────────────────────────────
-function flashSave() {
-  const btn = $('btn-save');
-  btn.textContent = '✓ Saved';
-  btn.classList.add('saved');
-  setTimeout(() => { btn.textContent = 'Save'; btn.classList.remove('saved'); }, 1500);
-}
-
-function disableButtons(disabled) {
-  document.querySelectorAll('.tx-btn').forEach(b => b.disabled = disabled);
+function flashSave(remote = false) {
+  btnSave.classList.remove('pushing');
+  btnSave.classList.add('saved');
+  btnSave.innerHTML = "&#10003; DEPLOYED";
+  setTimeout(() => { 
+    btnSave.classList.remove('saved'); 
+    btnSave.textContent = "PUSH POLICY"; 
+  }, 2000);
 }
 
 function timeAgo(ts) {
   const diff = Date.now() - ts;
-  if (diff < 5000) return 'Just now';
-  if (diff < 60000) return `${Math.floor(diff / 1000)}s ago`;
-  if (diff < 3600000) return `${Math.floor(diff / 60000)}m ago`;
-  if (diff < 86400000) return `${Math.floor(diff / 3600000)}h ago`;
-  return `${Math.floor(diff / 86400000)}d ago`;
+  if (diff < 5000) return 'JUST NOW';
+  if (diff < 60000) return `${Math.floor(diff / 1000)}s AGO`;
+  if (diff < 3600000) return `${Math.floor(diff / 60000)}m AGO`;
+  if (diff < 86400000) return `${Math.floor(diff / 3600000)}h AGO`;
+  return `${Math.floor(diff / 86400000)}d AGO`;
 }
 
-// ─── Event Listeners ─────────────────────────────────────
-document.querySelectorAll('.tx-btn:not(.custom)').forEach(btn => {
+// Listeners
+document.querySelectorAll('.sim-btn').forEach(btn => {
   btn.addEventListener('click', () => {
     const { amount, purpose, recipient } = btn.dataset;
-    sendTransaction(parseFloat(amount), purpose, recipient, 'Base');
+    sendTransaction(parseFloat(amount), purpose, recipient);
   });
 });
 
-$('btn-custom').addEventListener('click', () => $('modal-bg').classList.add('open'));
-$('modal-x').addEventListener('click', () => $('modal-bg').classList.remove('open'));
-$('modal-bg').addEventListener('click', e => { if (e.target === $('modal-bg')) $('modal-bg').classList.remove('open'); });
-
-$('btn-submit-custom').addEventListener('click', () => {
-  const amount = parseFloat($('c-amount').value);
-  const purpose = $('c-purpose').value;
-  const recipient = $('c-recipient').value;
-  const chain = $('c-chain').value;
-  if (!amount || !purpose) return alert('Amount and purpose required');
-  $('modal-bg').classList.remove('open');
-  sendTransaction(amount, purpose, recipient, chain);
-});
-
-$('btn-save').addEventListener('click', savePolicy);
-$('btn-ff').addEventListener('click', fastForward);
-$('btn-reset').addEventListener('click', resetDemo);
-
-// Ctrl+S to save policy
+btnSave.addEventListener('click', savePolicy);
 document.addEventListener('keydown', e => {
   if ((e.ctrlKey || e.metaKey) && e.key === 's') {
     e.preventDefault();
@@ -317,71 +309,5 @@ document.addEventListener('keydown', e => {
   }
 });
 
-// ─── Boot ────────────────────────────────────────────────
+// Boot
 connect();
-
-function runSplashSequence() {
-  const splash = $('splash-screen');
-  const dash = $('dashboard-wrapper');
-  if (!splash || !dash) return;
-
-  const logo = $('splash-logo');
-  const wordmark = $('splash-wordmark');
-  const subtitle = $('splash-subtitle');
-  const bootText = $('splash-boot-text');
-
-  // Step 2: Logo fades in at 0.8s
-  setTimeout(() => { logo.style.opacity = '1'; }, 800);
-
-  // Step 3: Wordmark types in at 1.6s
-  setTimeout(() => {
-    const text = 'ANTIGRAVITY';
-    let i = 0;
-    const typeInt = setInterval(() => {
-      wordmark.textContent += text[i];
-      i++;
-      if (i >= text.length) clearInterval(typeInt);
-    }, 80);
-  }, 1600);
-
-  // Step 4: Subtitle fades in at 2.6s
-  setTimeout(() => { subtitle.style.opacity = '1'; }, 2600);
-
-  // Step 5: System Boot text starts at 3.2s
-  setTimeout(() => {
-    const lines = [
-      'INITIALIZING OWS VAULT...............<span class="boot-ok">OK</span>',
-      'LOADING POLICY ENGINE................<span class="boot-ok">OK</span>',
-      'CONNECTING MOONPAY CLI...............<span class="boot-ok">OK</span>',
-      'ARMING DEAD AGENT SWITCH.............<span class="boot-ok">OK</span>',
-      'AGENT WALLET FUNDED..................<span class="boot-ok">OK</span>'
-    ];
-    let i = 0;
-    const bootInt = setInterval(() => {
-      const lineSpan = document.createElement('span');
-      lineSpan.className = 'boot-line';
-      lineSpan.innerHTML = lines[i];
-      bootText.appendChild(lineSpan);
-      
-      // Trigger CSS transition
-      setTimeout(() => lineSpan.style.opacity = '1', 20);
-      
-      i++;
-      if (i >= lines.length) clearInterval(bootInt);
-    }, 200);
-  }, 3200);
-
-  // Step 6: Transition Out at 4.5s (fully gone by 4.8s)
-  setTimeout(() => {
-    // Fade out splash
-    splash.style.opacity = '0';
-    // Fade in dashboard
-    dash.style.opacity = '1';
-    dash.style.pointerEvents = 'auto';
-    
-    // Clean up DOM
-    setTimeout(() => { splash.remove(); }, 300);
-  }, 4500);
-}
-
-document.addEventListener('DOMContentLoaded', runSplashSequence);
