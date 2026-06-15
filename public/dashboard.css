@@ -1,0 +1,180 @@
+/* ============================================================
+   SENTINEL — Dashboard upgrade layer
+   Loaded after style.css. Lifts the War Room to the same craft
+   as the landing: glassy panels, bezelled boxes, soft hairlines,
+   inset highlights, refined type & motion. Class names unchanged
+   so all live WebSocket-driven rendering keeps working.
+   ============================================================ */
+
+#view-dashboard {
+  background:
+    radial-gradient(70% 55% at 85% -10%, rgba(244, 162, 76, .08), transparent 60%),
+    radial-gradient(60% 50% at 0% 110%, rgba(87, 224, 216, .05), transparent 55%),
+    var(--bg);
+}
+
+/* ── Header ───────────────────────────────────────────────── */
+.dash-header {
+  height: 64px; padding: 0 1.5rem;
+  background: rgba(10, 20, 29, .72);
+  backdrop-filter: blur(16px) saturate(140%);
+  -webkit-backdrop-filter: blur(16px) saturate(140%);
+  border-bottom: 1px solid rgba(255, 255, 255, .06);
+}
+.dh-left { gap: 12px; }
+.dh-title { font-family: var(--font-disp); font-weight: 600; font-size: 15px; letter-spacing: 5px; }
+.dh-sub { font-family: var(--font-mono); font-size: 8.5px; letter-spacing: 1.5px; color: var(--muted); }
+.btn-link { letter-spacing: 1.5px; }
+
+.dh-right { gap: 8px; }
+.badge {
+  font-family: var(--font-mono); font-size: 9px; letter-spacing: .5px;
+  padding: 4px 9px; border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, .08); background: rgba(255, 255, 255, .03); color: var(--muted);
+}
+.badge-pill {
+  padding: 4px 11px 4px 9px; border-radius: 999px;
+  border: 1px solid rgba(244, 162, 76, .3); background: rgba(244, 162, 76, .06); color: var(--orange-hi);
+}
+.badge-pill #chain-label, .badge-pill span:last-child { font-size: 9px; letter-spacing: .8px; }
+.dot { width: 6px; height: 6px; box-shadow: 0 0 8px var(--orange); }
+.dot.live { background: var(--green); box-shadow: 0 0 8px var(--green); }
+.badge-pill:has(.dot.live) { border-color: rgba(79, 209, 168, .35); background: rgba(79, 209, 168, .08); color: var(--green); }
+
+/* ── Grid & panels ────────────────────────────────────────── */
+.dash-grid { grid-template-columns: 312px 1fr 288px; }
+.panel { padding: 1.5rem 1.4rem; border-right: 1px solid rgba(255, 255, 255, .05); }
+.panel-col { border-right: 1px solid rgba(255, 255, 255, .05); }
+.center-col { background: rgba(255, 255, 255, .008); }
+
+.panel, .panel-col { animation: panelIn .7s var(--ease, ease) both; }
+.p-vault { animation-delay: .04s; }
+.center-col { animation-delay: .1s; }
+.p-controls { animation-delay: .16s; }
+@keyframes panelIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; } }
+
+.p-title { font-family: var(--font-disp); font-weight: 600; font-size: 9px; letter-spacing: 3px; color: var(--orange); }
+.p-tag { font-family: var(--font-mono); font-size: 9px; letter-spacing: .5px; color: var(--muted); }
+
+/* ── Vault: balance bezel ─────────────────────────────────── */
+.bal-box {
+  margin: 1.4rem 0; padding: 1.6rem 1rem 1.4rem; border-radius: 18px;
+  background: linear-gradient(165deg, rgba(244, 162, 76, .07), rgba(15, 30, 42, .6));
+  border: 1px solid rgba(255, 255, 255, .07);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, .07), 0 16px 40px -24px rgba(0, 0, 0, .8);
+}
+.bal-box .lbl { font-family: var(--font-mono); font-size: 8.5px; letter-spacing: 2.5px; color: var(--muted); }
+.amt-val { font-family: var(--font-disp); font-weight: 700; font-size: 42px; letter-spacing: -1px; color: var(--white); }
+.amt-val.flash { color: var(--green); text-shadow: 0 0 24px rgba(79, 209, 168, .6); }
+.amt-cur { font-family: var(--font-mono); color: var(--orange-hi); font-size: 11px; letter-spacing: 2px; }
+.amt-change { font-family: var(--font-mono); font-size: 9px; letter-spacing: .5px; color: var(--muted); }
+
+/* address rows */
+.w-addr-box .lbl { font-family: var(--font-mono); font-size: 8.5px; letter-spacing: 1.5px; color: var(--muted); margin-bottom: 8px; }
+.addr-chain { gap: 8px; margin-top: 7px; }
+.addr-tag {
+  font-family: var(--font-mono); font-size: 8px; letter-spacing: 1px; font-weight: 500;
+  padding: 2px 7px; border-radius: 999px; min-width: 44px;
+  color: var(--orange-hi); background: rgba(244, 162, 76, .1); border: 1px solid rgba(244, 162, 76, .25);
+}
+.addr-tag.sol { color: var(--cyan); background: rgba(87, 224, 216, .1); border-color: rgba(87, 224, 216, .25); }
+.addr-tag.btc { color: var(--sky); background: rgba(143, 205, 232, .1); border-color: rgba(143, 205, 232, .25); }
+.addr-val { font-size: 10px; color: var(--text); }
+a.addr-val { color: var(--orange-hi); }
+.addr-src { font-family: var(--font-mono); font-size: 8px; letter-spacing: 1px; color: var(--muted); margin-top: 12px; }
+
+/* stats */
+.stats-list { border-top: 1px solid rgba(255, 255, 255, .06); border-bottom: 1px solid rgba(255, 255, 255, .06); gap: 11px; padding: 1.3rem 0; }
+.stat-row .lbl { font-family: var(--font-mono); font-size: 9px; letter-spacing: 1px; color: var(--muted); }
+.stat-row .val { font-family: var(--font-mono); font-size: 11px; }
+
+/* dead-agent switch */
+.das-block {
+  margin-top: auto; padding: 1.1rem; border-radius: 16px;
+  background: linear-gradient(165deg, rgba(255, 180, 84, .06), rgba(15, 30, 42, .5));
+  border: 1px solid rgba(255, 180, 84, .18); border-top: 1px solid rgba(255, 180, 84, .18);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, .05);
+}
+.das-bar-bg { height: 5px; border-radius: 999px; background: rgba(255, 180, 84, .12); }
+.das-bar-fill { border-radius: 999px; }
+.das-timer { font-family: var(--font-disp); font-weight: 700; font-size: 26px; letter-spacing: 1px; color: var(--amber); }
+.das-sub { font-family: var(--font-mono); font-size: 8px; letter-spacing: 1.5px; color: var(--muted); }
+
+/* ── Policy editor ────────────────────────────────────────── */
+.p-policy { border-bottom: 1px solid rgba(255, 255, 255, .05); }
+#policy-editor {
+  border-radius: 14px; padding: 1.1rem; line-height: 1.7; font-size: 12px;
+  background: rgba(7, 15, 22, .55); border: 1px solid rgba(255, 255, 255, .07);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, .04);
+  transition: border-color .4s var(--ease, ease), box-shadow .4s var(--ease, ease);
+}
+#policy-editor:focus { border-color: rgba(244, 162, 76, .4); box-shadow: inset 0 1px 0 rgba(255, 255, 255, .04), 0 0 0 3px rgba(244, 162, 76, .08); }
+.pol-status { font-family: var(--font-mono); font-size: 9.5px; letter-spacing: 1px; }
+.btn-push {
+  font-family: var(--font-disp); font-weight: 600; font-size: 9px; letter-spacing: 1.5px;
+  padding: 8px 16px; border-radius: 999px;
+  border: 1px solid rgba(244, 162, 76, .45); color: var(--orange-hi); background: rgba(244, 162, 76, .04);
+  transition: all .4s var(--ease, ease);
+}
+.btn-push:hover { background: rgba(244, 162, 76, .14); box-shadow: 0 0 18px rgba(244, 162, 76, .2); }
+.btn-push.saved { border-color: rgba(79, 209, 168, .5); color: var(--green); background: rgba(79, 209, 168, .12); }
+
+/* ── Transaction feed cards ──────────────────────────────── */
+.feed-empty {
+  font-family: var(--font-mono); font-size: 9.5px; letter-spacing: 1px; color: var(--muted);
+  border: 1px dashed rgba(255, 255, 255, .1); border-radius: 14px; padding: 2.2rem;
+}
+.tx-item {
+  border-radius: 14px; padding: .95rem 1.05rem;
+  background: rgba(255, 255, 255, .025); border: 1px solid rgba(255, 255, 255, .06);
+  border-left: 3px solid rgba(255, 255, 255, .12);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, .04);
+  transition: transform .45s var(--ease, ease), border-color .45s var(--ease, ease), background .45s var(--ease, ease);
+}
+.tx-item:hover { transform: translateX(3px); background: rgba(255, 255, 255, .04); }
+.tx-item.app { border-left-color: var(--green); }
+.tx-item.rej { border-left-color: var(--red); }
+.tx-item.eval { border-left-color: var(--amber); }
+.tx-item.sys { border-left-color: var(--orange); }
+.tx-badge { font-family: var(--font-mono); font-size: 8.5px; letter-spacing: 1px; padding: 3px 8px; border-radius: 999px; }
+.tx-time { font-family: var(--font-mono); font-size: 9px; color: var(--muted); }
+.tx-desc { font-family: var(--font-body); font-weight: 600; font-size: 13.5px; color: var(--white); }
+.tx-amt { font-family: var(--font-mono); font-size: 11px; color: var(--orange-hi); }
+.tx-reason { font-family: var(--font-mono); font-size: 10px; line-height: 1.55; color: var(--text); border-top: 1px dashed rgba(255, 255, 255, .08); }
+.tx-hash, .tx-sig { font-family: var(--font-mono); font-size: 9px; }
+.sig-badge {
+  font-size: 7.5px; letter-spacing: 1px; padding: 2px 6px; border-radius: 999px;
+  background: rgba(79, 209, 168, .14); color: var(--green);
+}
+.sig-badge.sim { background: rgba(255, 180, 84, .14); color: var(--amber); }
+
+/* ── Spend simulator buttons ─────────────────────────────── */
+.sim-btn {
+  border-radius: 13px; padding: .85rem .95rem;
+  background: rgba(255, 255, 255, .02); border: 1px solid rgba(255, 255, 255, .07);
+  border-left: 3px solid transparent;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, .04);
+  transition: transform .4s var(--ease, ease), border-color .4s var(--ease, ease), background .4s var(--ease, ease), box-shadow .4s var(--ease, ease);
+}
+.sim-btn:hover { transform: translateX(4px); background: rgba(244, 162, 76, .06); border-left-color: var(--orange); box-shadow: 0 8px 24px -16px rgba(244, 162, 76, .6); }
+.sim-btn.bad:hover { background: rgba(244, 104, 92, .06); border-left-color: var(--red); }
+.sim-btn.adv:hover { background: rgba(87, 224, 216, .07); border-left-color: var(--cyan); }
+.sim-btn:active { transform: translateX(2px) scale(.985); }
+.s-amt { font-family: var(--font-mono); font-size: 14px; color: var(--white); }
+.s-desc { font-family: var(--font-disp); font-weight: 500; font-size: 9px; letter-spacing: 1.5px; color: var(--muted); }
+
+/* ── LLM engine feed ─────────────────────────────────────── */
+.llm-feed {
+  border-radius: 14px; padding: .95rem;
+  background: rgba(7, 15, 22, .55); border: 1px solid rgba(255, 255, 255, .07);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, .04);
+}
+.llm-msg { font-family: var(--font-mono); font-size: 10px; line-height: 1.55; color: var(--amber); border-bottom: 1px dashed rgba(255, 255, 255, .07); }
+.llm-label { color: var(--cyan); }
+
+/* ── Custom scrollbars ───────────────────────────────────── */
+.feed-scroll::-webkit-scrollbar, .llm-feed::-webkit-scrollbar, #policy-editor::-webkit-scrollbar { width: 5px; }
+.feed-scroll::-webkit-scrollbar-thumb, .llm-feed::-webkit-scrollbar-thumb, #policy-editor::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, .1); border-radius: 999px;
+}
+.feed-scroll::-webkit-scrollbar-thumb:hover, .llm-feed::-webkit-scrollbar-thumb:hover { background: rgba(244, 162, 76, .35); }

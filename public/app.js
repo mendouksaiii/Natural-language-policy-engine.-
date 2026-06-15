@@ -370,4 +370,34 @@ const revealObserver = new IntersectionObserver((entries) => {
 
 document.querySelectorAll('.reveal').forEach(el => revealObserver.observe(el));
 
+// ─── Spiral intro splash ─────────────────────────────────
+(function initIntro() {
+  const intro = document.getElementById('view-intro');
+  const canvas = document.getElementById('spiral-canvas');
+  const center = document.getElementById('intro-center');
+  if (!intro || !canvas) return;
+
+  if (window.SentinelSpiral) window.SentinelSpiral.mount(canvas);
+
+  // Reveal the entry controls once the spiral has formed
+  setTimeout(() => center && center.classList.add('in'), 1800);
+
+  let dismissed = false;
+  function dismiss(then) {
+    if (dismissed) return;
+    dismissed = true;
+    intro.classList.add('out');
+    setTimeout(() => {
+      if (window.SentinelSpiral) window.SentinelSpiral.destroy();
+      intro.remove(); // free the full-screen canvas instead of leaving it hidden in the DOM
+      if (typeof then === 'function') then();
+    }, 900);
+  }
+
+  const enter = document.getElementById('intro-enter');
+  const explore = document.getElementById('intro-explore');
+  if (enter) enter.addEventListener('click', () => dismiss(showDashboard)); // straight into the War Room
+  if (explore) explore.addEventListener('click', () => dismiss());          // reveal the landing pitch
+})();
+
 connect();

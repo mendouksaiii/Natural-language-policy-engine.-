@@ -9,8 +9,21 @@
   <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&family=Fraunces:ital,opsz,wght@1,9..144,400;1,9..144,500&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="style.css">
   <link rel="stylesheet" href="landing.css">
+  <link rel="stylesheet" href="dashboard.css">
 </head>
 <body>
+
+  <!-- ========================================== -->
+  <!-- 0. SPIRAL INTRO SPLASH                     -->
+  <!-- ========================================== -->
+  <div id="view-intro">
+    <canvas id="spiral-canvas"></canvas>
+    <div class="intro-vignette"></div>
+    <div class="intro-center" id="intro-center">
+      <button class="intro-btn" id="intro-enter">Enter the War Room</button>
+      <button class="intro-explore" id="intro-explore">explore the project</button>
+    </div>
+  </div>
 
   <div class="lp-grain"></div>
 
@@ -385,6 +398,8 @@
     </main>
   </div>
 
+  <script src="vendor/gsap.min.js"></script>
+  <script src="spiral.js"></script>
   <script src="app.js"></script>
 </body>
 </html>
