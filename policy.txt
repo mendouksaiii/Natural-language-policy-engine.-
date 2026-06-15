@@ -1,10 +1,13 @@
-AGENT SPENDING POLICY
-=====================
+SENTINEL — AGENT SPENDING POLICY
+================================
 
-1. Only pay for API services, data feeds, and cloud infrastructure.
-2. Never spend more than $20 on a single transaction.
-3. Never transact on weekends (Saturday or Sunday).
-4. Total daily spending must not exceed $50.
-5. Only transact on the Base network.
-6. Never send funds to unverified or unknown wallet addresses.
-7. If the agent has been inactive for 7 days, send all remaining funds to the backup wallet 0xBACKUP...SAFE.
+This plain-English policy is evaluated by the AI before every spend. When the AI
+approves, it signs an EIP-712 authorization and the SentinelVault on Mantle
+releases the funds. Without that signed approval, the vault cannot move a cent.
+
+1. You may pay for API calls and data, but each single transaction must never exceed $50.
+2. You may run paid search/oracle queries — max cost $0.50 USDC per search.
+3. NEVER pay any recipient containing "BlockedVendor".
+4. Total daily spending must not exceed $100.
+5. Never spend more than the vault currently holds.
+6. If the agent is inactive for 7 days, send all remaining funds to the backup wallet.

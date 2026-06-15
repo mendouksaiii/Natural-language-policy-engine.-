@@ -1,17 +1,27 @@
 {
-  "name": "natural-language-policy-engine",
-  "version": "1.0.0",
-  "description": "Natural language policy engine extending OWS — AI agent spending policies in plain English, evaluated by Claude in real time before every ows_sign call",
+  "name": "sentinel-mantle",
+  "version": "2.0.0",
+  "description": "SENTINEL — an on-chain-enforced natural-language policy firewall for autonomous AI agents, deployed on Mantle Network. The AI's spending decision is a cryptographic precondition for on-chain execution.",
   "type": "module",
   "main": "server.js",
   "scripts": {
     "start": "node server.js",
-    "dev": "node --watch server.js"
+    "dev": "node --watch server.js",
+    "postinstall": "node scripts/compile.js",
+    "genkey": "node scripts/genkey.js",
+    "compile": "node scripts/compile.js",
+    "deploy:mantle": "node scripts/deploy.js",
+    "fund:check": "node scripts/balance.js",
+    "test:local": "node scripts/test-local.js"
   },
   "dependencies": {
-    "@open-wallet-standard/core": "^1.2.4",
     "dotenv": "^16.3.1",
+    "ethers": "^6.13.4",
     "express": "^4.18.2",
+    "solc": "0.8.24",
     "ws": "^8.16.0"
+  },
+  "devDependencies": {
+    "ganache": "^7.9.2"
   }
 }

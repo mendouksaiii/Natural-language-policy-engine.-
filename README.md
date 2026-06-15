@@ -1,192 +1,136 @@
-# SENTINEL — Natural Language Policy Engine for OWS
+# SENTINEL — On-chain AI Policy Firewall for Autonomous Agents
 
-> Extending OWS's most important primitive: the pre-signing policy engine.  
-> Agent spending policies written in **plain English**, evaluated by Claude in real time before every `ows_sign` call.
+> **A natural-language spending policy, enforced as a cryptographic precondition by a smart contract on Mantle.**
+> The AI's decision isn't advice — without its EIP-712 approval, the agent's vault physically cannot move funds.
 
-![OWS](https://img.shields.io/badge/OWS-Policy_Engine-f97316?style=for-the-badge) ![Claude Powered](https://img.shields.io/badge/Claude-Powered-ff6b35?style=for-the-badge) ![MoonPay CLI](https://img.shields.io/badge/MoonPay-CLI_v1.23-7c3aed?style=for-the-badge) ![License](https://img.shields.io/badge/License-MIT-22c55e?style=for-the-badge)
+![Mantle](https://img.shields.io/badge/Mantle-Sepolia_5003-65B3AE?style=for-the-badge)
+![EIP-712](https://img.shields.io/badge/EIP--712-AI_co--signer-f97316?style=for-the-badge)
+![License](https://img.shields.io/badge/License-MIT-22c55e?style=for-the-badge)
 
-**🔴 Live Demo:** [sentinel-nlp-engine.onrender.com](https://sentinel-nlp-engine.onrender.com)
+Built for the **Mantle Turing Hackathon** — AI × on-chain.
 
 ---
 
-## 📋 Note for Judges
+## The problem
 
-### What Is This?
+Autonomous AI agents are getting their own treasuries — they pay for APIs, compute, data, and oracle queries and settle on-chain with no human in the loop. The only thing standing between an agent (or a *hijacked* agent) and a drained wallet today is a rigid JSON config, checked **off-chain, inside the very process an attacker is trying to compromise.** If the backend is owned, the policy is owned.
 
-SENTINEL is an **extension to the Open Wallet Standard** that replaces rigid JSON config policies with **plain English rules**, evaluated by Claude (LLM) before every signing call. It uses the **real OWS SDK** (`@open-wallet-standard/core`) for cryptographic wallet operations and the **MoonPay CLI** for wallet management.
+## The idea
 
-### Why It Matters
+SENTINEL separates **policy** from **enforcement**:
 
-AI agents are getting wallets. They'll spend autonomously — paying for APIs, buying compute, subscribing to data feeds. OWS provides the standard infrastructure for this. But its policy engine today uses config files:
+- **Policy** is a plain-English document a treasury manager edits — no JSON, no redeploy.
+- **Enforcement** is a smart contract on Mantle.
 
-```json
-{ "max_spend_usd": 20, "allowed_chains": ["base"], "blocked_days": [0, 6] }
-```
+An LLM reads the policy and the proposed spend and decides. When — and only when — it **approves**, the policy-signer key produces a single-use **EIP-712** authorization bound to `{token, recipient, amount, purposeHash, nonce, deadline}`. The on-chain `SentinelVault` verifies that signature before releasing a cent.
 
-**A config file can't handle "unless."** It can't understand "only for infrastructure, but allow emergencies." It can't express nuance.
-
-SENTINEL replaces that with:
-
-```
-1. Only pay for API services, data feeds, and cloud infrastructure.
-2. Never spend more than $20 on a single transaction.
-3. Never transact on weekends (Saturday or Sunday).
-4. If the agent goes silent for 7 days, send all funds to the backup wallet.
-```
-
-The person who understands the business rules — the founder, the treasury manager — writes the policy. No developer needed. Change a sentence, hit save, the agent updates on the next transaction.
-
-### What's Real vs. Simulated
-
-| Component | Status | Details |
-|-----------|--------|---------|
-| **OWS Wallet** | ✅ Real | Created via `@open-wallet-standard/core` Rust FFI. Real BIP-39 mnemonic, real HD-derived addresses for EVM, Solana, Bitcoin, Cosmos, and 5 more chains. |
-| **Cryptographic Signing** | ✅ Real | `ows.signMessage()` produces real secp256k1 signatures via the OWS Rust core. Every approved transaction shows a verifiable hex signature. |
-| **MoonPay CLI** | ✅ Real | CLI v1.23.1 integrated for wallet registration and on-chain balance queries. |
-| **Policy Engine** | ✅ Real | `sentinel-policy.js` implements OWS's `executable` policy protocol. Reads `PolicyContext` from stdin, writes `PolicyResult` to stdout. SENTINEL is a **first-class OWS policy plugin** per the spec. |
-| **LLM Evaluation** | ✅ Real | Claude (via OpenRouter) evaluates every transaction against the English policy. Returns APPROVED/REJECTED with reasoning and rule citation. |
-| **Token Transfers** | 🔶 Simulated | Balance tracking is simulated ($100 USDC). Real transfers require funded wallets — all the signing infrastructure is real and ready. |
-
-### How to Test It
-
-1. **Visit** [sentinel-nlp-engine.onrender.com](https://sentinel-nlp-engine.onrender.com) (may take ~30s to cold-start on free tier)
-2. **Click** "ENTER DASHBOARD" in the hero
-3. **Try these transactions** from the right panel:
-   - `$15.00 API SERVICE` → Should be **APPROVED** (allowed category, under limit)
-   - `$8.00 DATA FEED` → Should be **APPROVED** (allowed category, under limit)
-   - `$45.00 NFT MINT` → Should be **REJECTED** (not an allowed category)
-   - `$25.00 OVER LIMIT` → Should be **REJECTED** (exceeds $20 single-tx limit)
-4. **Edit the policy** in the center panel — change rules, hit "PUSH POLICY"
-5. **Test again** — the engine now evaluates against your updated rules
-6. **Watch the Dead Agent Switch** countdown in the bottom-left (7-day heartbeat)
-
-### Key Technical Decisions
-
-**Why natural language over JSON?**  
-JSON policies are binary — they can't handle conditional logic without nested rule trees. "Never spend more than $20, unless it's for emergency infrastructure" is a single English sentence but requires complex branching in code. LLMs evaluate intent, not syntax.
-
-**Why is SENTINEL an OWS executable policy, not a wrapper?**  
-OWS spec section 03 defines the `executable` policy protocol: a subprocess that receives `PolicyContext` on stdin and returns `PolicyResult` on stdout. SENTINEL implements this exactly. It's not wrapping OWS — it's extending the primitive the spec was designed for.
-
-**Why real signing when transfers are simulated?**  
-Real signing proves the integration is production-grade. The wallet exists on-chain at the displayed addresses. The only gap is funding — add USDC to that EVM address and the transfers would be real with zero code changes.
+**Consequence:** the agent itself, the relayer that pays gas, and any compromised backend **cannot move funds without a valid AI approval.** The model's decision is enforced by the EVM on Mantle, not trusted off-chain.
 
 ---
 
 ## Architecture
 
 ```
-Agent wants to spend
-       ↓
-SENTINEL intercepts (OWS executable policy plugin)
-       ↓
-Claude reads the tx + the English policy document
-       ↓
-├── APPROVED → ows.signMessage() → real secp256k1 signature → tx logged
-└── REJECTED → blocked → reason logged with specific rule citation
-       ↓
-Heartbeat monitors last approved tx
-       ↓
-7 days silence → Dead Agent Switch → ows.signMessage() → funds → backup wallet
+   Agent intent ($42 for compute)
+            │
+            ▼
+   ┌──────────────────┐     plain-English policy.txt
+   │  SENTINEL node   │◀────────────────────────────────
+   │  (server.js)     │
+   │                  │   1. LLM evaluates intent vs policy  (OpenRouter / Claude)
+   │                  │   2. APPROVED → policy-signer signs EIP-712 approval
+   │                  │   3. relayer submits vault.executeTransfer(...)
+   └────────┬─────────┘   4. logDecision(...) → on-chain audit (approve AND reject)
+            │
+            ▼  (Mantle Sepolia · chainId 5003)
+   ┌──────────────────┐        ┌─────────────────────┐
+   │  SentinelVault   │        │  SentinelRegistry   │
+   │  • holds USDC/MNT│        │  • append-only      │
+   │  • verifies the  │        │    decision log     │
+   │    EIP-712 sig   │        │  • tamper-evident   │
+   │  • single-use    │        │    audit trail      │
+   │    nonces        │        └─────────────────────┘
+   └──────────────────┘
 ```
 
-```
-┌─────────────────────────────────────────────────────────┐
-│                    SENTINEL SERVER                       │
-│                                                         │
-│  ┌─────────────┐  ┌──────────────┐  ┌───────────────┐  │
-│  │  OWS SDK     │  │  Claude/LLM  │  │  MoonPay CLI  │  │
-│  │  (Rust FFI)  │  │  (OpenRouter │  │  (v1.23.1)    │  │
-│  │              │  │   /Anthropic)│  │               │  │
-│  │ createWallet │  │  evaluates   │  │ balance query │  │
-│  │ signMessage  │  │  English     │  │ wallet mgmt   │  │
-│  │ listWallets  │  │  policy doc  │  │               │  │
-│  └──────┬───────┘  └──────┬───────┘  └───────┬───────┘  │
-│         │                 │                   │          │
-│         └────────┬────────┘                   │          │
-│                  ↓                            │          │
-│         sentinel-policy.js ◄──────────────────┘          │
-│         (OWS executable policy plugin)                   │
-│         stdin: PolicyContext JSON                         │
-│         stdout: PolicyResult JSON                        │
-└─────────────────────────────────────────────────────────┘
-```
+### Contracts (`contracts/`)
 
-## Four Components
+| Contract | Role |
+|---|---|
+| **`SentinelVault.sol`** | The agent's on-chain treasury. `executeTransfer` / `executeNativeTransfer` release funds **only** against a valid, unexpired, single-use EIP-712 approval signed by the configured `policySigner`. Manual ECDSA recovery, replay-safe nonces, domain-bound to chain 5003. |
+| **`SentinelRegistry.sol`** | Append-only, tamper-evident audit log. Every decision — **approve and reject** — commits `keccak256(policyVersion, txParams, decision, reason)` on-chain. The reusable "policy audit trail" primitive other Mantle agent projects can adopt. |
+| **`MockUSDC.sol`** | 6-decimal test settlement token so judges can reproduce the full demo without hunting a faucet token. Swap for canonical USDC on mainnet — the contracts are asset-agnostic. |
 
-| Component | What It Does |
-|-----------|-------------|
-| **OWS Wallet** | Real multi-chain wallet via `@open-wallet-standard/core`. EVM, Solana, Bitcoin addresses derived from BIP-39 mnemonic. Stored in `~/.ows/` vault. |
-| **Policy Document** | Plain text file. Written like instructions to a person, not code. Editable live from the dashboard. Changes take effect on the next transaction. |
-| **Policy Engine** | `sentinel-policy.js` — implements OWS executable policy spec. Intercepts every signing request, evaluates via Claude, returns `allow`/`deny`. |
-| **Dead Agent Switch** | Background heartbeat. 7 days of inactivity triggers automatic fund recovery via `ows.signMessage()` to the backup wallet. |
+### Off-chain (`server.js`, `mantle.js`)
 
-## Quick Start
+- Reads live vault balances from Mantle.
+- Runs the natural-language policy through an LLM (OpenRouter / Claude), with a deterministic fallback so the demo runs with **no API key**.
+- Signs EIP-712 approvals and relays real Mantle transactions, returning real tx hashes + explorer links.
+- WebSocket dashboard (`public/`) streams every decision, signature, and on-chain settlement live.
+
+---
+
+## Quick start
 
 ```bash
-git clone https://github.com/mendouksaiii/Natural-language-policy-engine.-.git
-cd Natural-language-policy-engine.-
-npm install
+npm install                 # also compiles the contracts (postinstall)
+cp .env.example .env
 
-# Create .env
-echo "OPENROUTER_API_KEY=your_key" > .env
+# 1. Generate fresh throwaway Mantle Sepolia keys
+npm run genkey              # prints a DEPLOYER address to fund
 
-# Run (via WSL for real OWS signing, or directly for simulation mode)
-wsl -- bash -c "cd $(pwd) && node server.js"
-# Or: node server.js  (simulation mode on Windows)
+# 2. Fund the printed deployer at https://faucet.sepolia.mantle.xyz
+npm run fund:check          # confirm MNT arrived
 
-# Open http://localhost:3000
+# 3. Deploy to Mantle Sepolia (vault, registry, mock USDC; seeds 25k USDC)
+npm run deploy:mantle       # writes deployments/mantle-sepolia.json
+
+# 4. (optional) add OPENROUTER_API_KEY to .env for live AI evaluation
+
+# 5. Run
+npm start                   # http://localhost:3000
 ```
 
-### Environment Variables
+**No deployment yet?** The app still runs in **off-chain preview** mode — the dashboard, policy editing, AI evaluation, and the rejection logic all work; only the on-chain settlement is stubbed until you deploy.
 
-| Variable | Required | Description |
-|----------|----------|-------------|
-| `OPENROUTER_API_KEY` | Recommended | Claude evaluation via OpenRouter |
-| `ANTHROPIC_API_KEY` | Alternative | Direct Anthropic API access |
-| `BACKUP_WALLET` | Optional | Dead agent switch recovery address |
-| `INITIAL_BALANCE` | Optional | Starting simulated balance (default: $100) |
+---
 
-If no API key is set, SENTINEL falls back to a built-in rule parser (simulation mode).
+## Demo flow
 
-### LLM Providers
+1. Open the dashboard → **Enter War Room**.
+2. The **Agent Spend Simulator** fires transactions at the firewall:
+   - `$42 compute` → **approved**, signed, **settled on Mantle** (click the tx hash → explorer).
+   - `$150 BlockedVendor` → **rejected** by rule 3; the rejection is still committed on-chain to the audit registry.
+   - `$5 search` → **rejected** by the per-search cap.
+3. **Red Team Mode** sweeps adversarial probes (just-under-limit, oversized, blocked-vendor) to show the firewall holding.
+4. Edit the **policy document** in plain English, hit **Push Policy** — the next transaction is judged against the new rule, no redeploy.
+5. The **Dead-Agent Switch** countdown sweeps the vault to the backup wallet on-chain if the agent goes silent (`/api/heartbeat/fast-forward` to demo it instantly).
 
-| Provider | Env Variable | Model |
-|----------|-------------|-------|
-| OpenRouter (recommended) | `OPENROUTER_API_KEY` | `anthropic/claude-sonnet-4-20250514` |
-| Anthropic (direct) | `ANTHROPIC_API_KEY` | `claude-sonnet-4-20250514` |
-| Simulation (no key) | — | Built-in regex rule parser |
+---
 
-## Tech Stack
+## How this maps to the judging criteria
 
-| Layer | Technology |
-|-------|-----------|
-| **Wallet** | `@open-wallet-standard/core` — Rust native bindings via NAPI |
-| **CLI** | MoonPay CLI v1.23.1 — balance queries, wallet registration |
-| **Backend** | Node.js, Express, WebSocket (ws) |
-| **Frontend** | Vanilla HTML/CSS/JS — zero framework overhead |
-| **LLM** | Claude via OpenRouter / Anthropic API |
-| **Deployment** | Render (free tier, auto-deploy from GitHub) |
+| Dimension | Where it shows up |
+|---|---|
+| **Technical Depth** (AI × on-chain) | The AI's decision is an on-chain precondition: LLM → EIP-712 signature → contract-verified `executeTransfer`. Three Solidity contracts, manual ECDSA recovery, replay-safe nonces, dependency-light solc build. |
+| **Innovation** | A new paradigm — *AI as an on-chain co-signer.* Natural-language policy whose enforcement is cryptographic, plus a tamper-evident on-chain log of every autonomous spending decision. |
+| **Mantle Ecosystem Contribution** | Native Mantle deployment (chainId 5003), MNT gas, real on-chain settlement. The `PolicyGuard` + `Registry` pattern is a reusable primitive any agent treasury on Mantle can adopt. |
+| **Product Completeness** | One-command run, live WebSocket war-room UI, runnable with or without an API key, real explorer-linked transactions, deploy script + faucet flow documented. |
 
-## File Structure
+---
+
+## Project layout
 
 ```
-├── server.js              # Express + WebSocket server, OWS SDK integration
-├── sentinel-policy.js     # OWS executable policy plugin (stdin/stdout JSON protocol)
-├── policy.txt             # The plain-English policy document
-├── render.yaml            # Render deployment config
-├── public/
-│   ├── index.html         # SPA — landing page + War Room dashboard
-│   ├── style.css          # Design system — dark theme, animations
-│   └── app.js             # Client — WebSocket, routing, OWS status display
-├── .env.example           # Environment variable template
-└── package.json
+contracts/        SentinelVault.sol · SentinelRegistry.sol · MockUSDC.sol
+scripts/          genkey · compile (solc) · deploy · balance
+mantle.js         on-chain layer: balances, EIP-712 signing, relaying, audit log
+server.js         policy engine + LLM evaluation + WebSocket dashboard
+public/           vanilla HTML/CSS/JS war-room dashboard
+deployments/      mantle-sepolia.json (written by deploy)
+PITCH.md          one-page project pitch
 ```
 
 ## License
 
 MIT
-
----
-
-**Built for OWS BuidlHack 2026** — Extending the standard with human-readable policy intelligence.

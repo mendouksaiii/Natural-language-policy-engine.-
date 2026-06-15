@@ -1,12 +1,22 @@
 services:
   - type: web
-    name: sentinel-nlp-engine
+    name: sentinel-mantle
     runtime: node
     plan: free
-    buildCommand: npm install
+    buildCommand: npm install && npm run compile
     startCommand: node server.js
     envVars:
       - key: NODE_ENV
         value: production
+      - key: MANTLE_RPC_URL
+        value: https://rpc.sepolia.mantle.xyz
+      - key: MANTLE_CHAIN_ID
+        value: "5003"
       - key: OPENROUTER_API_KEY
+        sync: false
+      - key: OPENROUTER_MODEL
+        value: anthropic/claude-sonnet-4.5
+      - key: DEPLOYER_KEY
+        sync: false
+      - key: POLICY_SIGNER_KEY
         sync: false

@@ -3,153 +3,234 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>SENTINEL — Natural Language Policy Engine</title>
+  <title>SENTINEL — On-chain AI Policy Firewall on Mantle</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Rajdhani:wght@400;600;700&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&family=Fraunces:ital,opsz,wght@1,9..144,400;1,9..144,500&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="landing.css">
 </head>
 <body>
+
+  <div class="lp-grain"></div>
 
   <!-- ========================================== -->
   <!-- 1. LANDING PAGE VIEW                       -->
   <!-- ========================================== -->
   <div id="view-landing">
-    <!-- Scan Lines Overlay -->
-    <div class="scanlines"></div>
 
-    <!-- Hero Block -->
-    <div class="hero">
-      <div class="hero-glow"></div>
-      <div class="hero-particles" id="hero-particles"></div>
-
-      <div class="hero-logo">
-        <svg viewBox="0 0 120 140" xmlns="http://www.w3.org/2000/svg" class="shield-logo">
-          <!-- Shield shape -->
-          <path d="M60 8 L110 30 L110 85 Q110 120 60 135 Q10 120 10 85 L10 30 Z" 
-                fill="none" stroke="currentColor" stroke-width="5" stroke-linejoin="round" class="shield-path"/>
-          <!-- S lettermark -->
-          <path d="M72 45 L45 45 L45 65 L78 65 L78 95 L42 95" 
-                fill="none" stroke="currentColor" stroke-width="7" stroke-linecap="square" stroke-linejoin="miter" class="s-path"/>
-          <!-- Horizontal bar accents -->
-          <line x1="38" y1="55" x2="52" y2="55" stroke="currentColor" stroke-width="4" class="accent-line"/>
-          <line x1="68" y1="85" x2="82" y2="85" stroke="currentColor" stroke-width="4" class="accent-line"/>
-        </svg>
-      </div>
-      <h1 class="hero-title animate-in">SENTINEL</h1>
-      <div class="hero-subtitle animate-in d2">AGENT SPEND GOVERNANCE // OWS PROTOCOL</div>
-      <div class="hero-tagline animate-in d3">Plain English, Not JSON.</div>
-      <button class="btn-cta hero-cta animate-in d4" id="btn-enter-dash">ENTER DASHBOARD &rarr;</button>
-      <div class="scroll-ind">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
-        <span>SCROLL TO READ</span>
-      </div>
-    </div>
-
-    <!-- Content Sections -->
-    <div class="landing-content">
-      <p class="body-text">
-        AI agents are getting their own wallets. They are going to spend money autonomously — paying for APIs, buying compute, subscribing to data feeds, and transacting on-chain over the next decade.
-      </p>
-      <p class="body-text">
-        The Open Wallet Standard (OWS), pioneered by MoonPay, is building the infrastructure for this reality. It provides a secure, universal way for agents to interact with blockchain wallets without ever holding the private keys. But as we transition into this agentic economy, a critical question arises: <b>Who controls what the agent can spend, and how?</b>
-      </p>
-      <p class="body-text">
-        Right now, the answer is developers writing code.
-      </p>
-
-      <div class="section-divider"><div class="sec-header"></div></div>
-      <h3 class="heading-3">The Problem with Config Files</h3>
-
-      <p class="body-text">
-        OWS ships with a pre-signing policy engine. Before any key is touched, the engine evaluates the requested transaction against configured rules. It works perfectly, but it is rigid. A standard spending policy today looks like this:
-      </p>
-
-      <div class="code-block">
-{
-  "max_spend_usd": 20,
-  "allowed_chains": ["base"],
-  "blocked_days": [0, 6]
-}
-      </div>
-
-      <p class="body-text">
-        If an operator wants to change a spending limit from $20 to $50, they have to file a ticket. A developer edits a config file, and it goes through a deployment cycle.
-      </p>
-      <p class="body-text">
-        Furthermore, config files are binary — they completely fail on nuance. You cannot easily write a JSON rule that says: "Never spend more than $20 on a single transaction, unless it's for emergency cloud infrastructure."
-      </p>
-      <p class="body-text">
-        If the whole point of AI agents is autonomy, the rules governing that autonomy shouldn't be locked behind rigid technical implementation.
-      </p>
-
-      <div class="section-divider"><div class="sec-header"></div></div>
-      <h3 class="heading-3">Enter SENTINEL: The Natural Language Policy Engine</h3>
-
-      <p class="body-text">
-        For the OWS Hackathon, we built SENTINEL — an extension to OWS that replaces config files and code with plain English.
-      </p>
-      <p class="body-text">
-        With SENTINEL, your agent's spending policy is literally a document:
-      </p>
-
-      <div class="blockquote">
-        AGENT SPENDING POLICY<br>
-        1. Only pay for API services, data feeds, and cloud infrastructure.<br>
-        2. Never spend more than $20 on a single transaction.<br>
-        3. Total daily spending must not exceed $50.<br>
-        4. If the agent goes entirely silent for 7 days, trigger the dead agent switch and send all remaining funds to the backup wallet.
-      </div>
-
-      <p class="body-text">
-        Every time the agent wants to spend, it gets stopped by the policy engine. But instead of parsing a JSON file, the engine bundles the transaction details with your plain text policy and hands them to Claude (LLM).
-      </p>
-      <p class="body-text">
-        Claude evaluates the intent of the transaction against the English rules. It responds with an APPROVED or REJECTED decision, citing the exact rule it followed. Only a definitive "Yes" from Claude unlocks the wallet to call ows_sign.
-      </p>
-
-      <div class="section-divider"><div class="sec-header"></div></div>
-      <h3 class="heading-3">Nuance, Speed, and the Dead Agent Switch</h3>
-
-      <p class="body-text">
-        This architectural shift unlocks three massive benefits:
-      </p>
-
-      <div class="feature-row">
-        <div class="feature-card">
-          <div class="card-label">ACCESSIBILITY</div>
-          <div class="card-text">The person who understands the business rules — the founder, the treasury manager — can write and edit the policy themselves. Change a sentence, hit save, the agent updates on the next transaction.</div>
+    <!-- Floating glass nav -->
+    <nav class="lp-nav">
+      <div class="lp-nav-inner">
+        <div class="lp-brand">
+          <svg viewBox="0 0 100 100" fill="none" stroke="currentColor" stroke-width="7" stroke-linejoin="round">
+            <polygon points="50 6, 92 26, 92 70, 50 94, 8 70, 8 26"/>
+          </svg>
+          <b>SENTINEL</b>
         </div>
-        <div class="feature-card">
-          <div class="card-label">CONTEXTUAL NUANCE</div>
-          <div class="card-text">A config file blocks $20.01 universally. Claude understands intent. "Only on weekdays, but allow weekends if our server goes down" is a completely valid rule SENTINEL can enforce without complex logic trees.</div>
+        <div class="lp-links">
+          <a href="#problem">The problem</a>
+          <a href="#how">How it works</a>
+          <a href="#proof">Live on Mantle</a>
         </div>
-        <div class="feature-card">
-          <div class="card-label">DEAD AGENT SWITCH</div>
-          <div class="card-text">By simply writing "If inactive for 7 days, send funds to backup" in the policy document, the engine's background heartbeat safely executes an auto-recovery transaction. No secondary monitoring system needed.</div>
+        <button class="lp-btn" id="btn-enter-dash">
+          Enter War Room
+          <span class="lp-btn-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg></span>
+        </button>
+      </div>
+    </nav>
+
+    <!-- HERO -->
+    <header class="lp-hero">
+      <div class="lp-hero-bg"></div>
+      <img class="lp-hero-img" src="assets/hero.jpg" alt="" onerror="this.remove()">
+      <div class="lp-hero-scrim"></div>
+      <div class="lp-hero-grade"></div>
+
+      <div class="lp-hero-content">
+        <div class="lp-hero-inner">
+          <span class="lp-eyebrow"><span class="pip"></span>Mantle Turing · AI × On-chain</span>
+          <h1 class="lp-h1">Your agent's money,<br>governed in <em>plain English</em>.</h1>
+          <p class="lp-lede">
+            SENTINEL is an on-chain policy firewall for autonomous agents. An AI reads a
+            human-written policy and its approval becomes a cryptographic key — the agent's
+            vault on Mantle physically cannot move funds without it.
+          </p>
+          <div class="lp-cta-row">
+            <button class="lp-btn" id="btn-enter-dash-2">
+              Enter the War Room
+              <span class="lp-btn-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg></span>
+            </button>
+            <a class="lp-btn ghost" href="#how">See how it works</a>
+          </div>
+          <div class="lp-hero-meta">
+            <span class="lp-livechip"><span class="pip"></span>Live on Mantle Sepolia</span>
+            <span class="lp-chip">EIP-712 gated</span>
+            <span class="lp-chip">8/8 enforcement tests</span>
+            <span class="lp-chip">chainId 5003</span>
+          </div>
         </div>
       </div>
 
-      <div class="section-divider"><div class="sec-header"></div></div>
-      <h3 class="heading-3">Extending the Primitive</h3>
+      <div class="lp-scroll">
+        <span>SCROLL</span>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg>
+      </div>
+    </header>
 
-      <p class="body-text">
-        SENTINEL isn't a wrapper around OWS — it's an extension of its most important primitive. The policy engine is the soul of the standard. It is what stands between an autonomous machine and your money.
-      </p>
-      <p class="body-text">
-        By upgrading that engine to understand natural language, we ensure that as AI agents become more sophisticated, our ability to control and guide them remains human.
-      </p>
+    <!-- Marquee -->
+    <div class="lp-marquee">
+      <div class="lp-marquee-track">
+        <span>SentinelVault.sol</span><span>EIP-712 AI co-signer</span><span>On-chain audit registry</span><span>Replay-safe nonces</span><span>Dead-agent switch</span><span>MNT gas</span>
+        <span>SentinelVault.sol</span><span>EIP-712 AI co-signer</span><span>On-chain audit registry</span><span>Replay-safe nonces</span><span>Dead-agent switch</span><span>MNT gas</span>
+      </div>
     </div>
 
-    <!-- CTA & Footer -->
-    <div class="cta-block">
-      <div class="cta-label">BUILT FOR OWS BUIDLHACK 2026</div>
-      <div class="cta-title">See It Running.</div>
-      <div class="cta-sub">Watch Claude police agent transactions in real time.</div>
-      <button class="btn-cta" id="btn-enter-dash-2">ENTER DASHBOARD &rarr;</button>
-    </div>
+    <!-- THE PROBLEM -->
+    <section class="lp-section" id="problem">
+      <div class="lp-wrap lp-split">
+        <div class="reveal">
+          <span class="lp-kicker">The problem</span>
+          <h2 class="lp-h2">Agent treasuries are guarded by a <em>config file</em>.</h2>
+        </div>
+        <div class="reveal d1">
+          <p class="lp-p">
+            Autonomous agents already pay for APIs, compute, data and oracle queries — and they
+            settle on-chain with no human in the loop. The only thing between an agent and a
+            drained wallet today is a rigid JSON config, checked <b>off-chain, inside the very
+            process an attacker is trying to compromise.</b>
+          </p>
+          <p class="lp-p">
+            A config is binary and brittle. It can't express intent, and worse — own the process,
+            own the policy, drain the wallet. As agents scale, "trust the off-chain check" is not
+            a security model.
+          </p>
+        </div>
+      </div>
+    </section>
 
-    <footer>
-      SENTINEL // OWS BUIDLHACK 2026 // AGENT SPEND GOVERNANCE
+    <!-- HOW IT WORKS -->
+    <section class="lp-section" id="how">
+      <div class="lp-wrap">
+        <div class="reveal">
+          <span class="lp-kicker">How it works</span>
+          <h2 class="lp-h2">Policy in English.<br>Enforcement <em>on Mantle</em>.</h2>
+          <p class="lp-p" style="max-width:620px;margin-top:22px;">
+            SENTINEL splits the problem in two — a policy a human can read, and an enforcement
+            layer the EVM guarantees.
+          </p>
+        </div>
+        <div class="lp-steps">
+          <div class="lp-step bezel reveal d1"><div class="core">
+            <div class="num">01</div>
+            <h4>Read &amp; decide</h4>
+            <p>An LLM evaluates each proposed spend against the plain-English policy. Edit a sentence, hit save — the next transaction obeys it. No redeploy.</p>
+            <div class="tag">LLM · OpenRouter / Claude</div>
+          </div></div>
+          <div class="lp-step bezel reveal d2"><div class="core">
+            <div class="num">02</div>
+            <h4>Sign the approval</h4>
+            <p>On approval, the policy-signer key produces a single-use EIP-712 authorization bound to the exact recipient, amount, purpose, nonce and deadline.</p>
+            <div class="tag">EIP-712 · single-use nonce</div>
+          </div></div>
+          <div class="lp-step bezel reveal d3"><div class="core">
+            <div class="num">03</div>
+            <h4>Enforce on-chain</h4>
+            <p>SentinelVault verifies that signature before releasing a cent. No valid AI approval, no movement — guaranteed by the contract, not trusted off-chain.</p>
+            <div class="tag">SentinelVault.sol · Mantle 5003</div>
+          </div></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- THREE UNLOCKS -->
+    <section class="lp-section">
+      <div class="lp-wrap">
+        <div class="reveal">
+          <span class="lp-kicker">What it unlocks</span>
+          <h2 class="lp-h2">A firewall the EVM <em>enforces</em>.</h2>
+        </div>
+        <div class="lp-bento">
+          <div class="bezel reveal d1"><div class="core lp-cell">
+            <div class="lp-cell-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M7 4h7l4 4v12H7z"/><path d="M14 4v4h4"/><path d="M9.5 13h6M9.5 16h4"/></svg></div>
+            <div class="lp-cell-body">
+              <h4>English → enforced</h4>
+              <p>The treasury owner edits a sentence and hits save. The next transaction is judged against the new rule — no JSON, no ticket, no deploy. Enforcement still happens on-chain.</p>
+            </div>
+          </div></div>
+          <div class="bezel reveal d2"><div class="core lp-cell">
+            <div class="lp-cell-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l7 3v5c0 4.4-3 7.7-7 9-4-1.3-7-4.6-7-9V6z"/><path d="M9.5 12l1.8 1.8L15 10"/></svg></div>
+            <h4>Tamper-evident audit</h4>
+            <p>Every decision — approve <i>and</i> reject — is committed to the on-chain SentinelRegistry. A public, replayable record of how autonomous capital was governed.</p>
+          </div></div>
+          <div class="bezel reveal d3"><div class="core lp-cell">
+            <div class="lp-cell-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="8.5"/><path d="M12 7.5V12l3 2"/></svg></div>
+            <h4>Dead-agent switch</h4>
+            <p>Write "if idle 7 days, sweep to backup" and the heartbeat fires a real on-chain recovery transfer — same signed-approval gate, no separate monitor.</p>
+          </div></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- LIVE PROOF -->
+    <section class="lp-section" id="proof">
+      <div class="lp-wrap">
+        <div class="lp-proof bezel reveal"><div class="core">
+          <div class="lp-proof-head">
+            <div>
+              <span class="lp-kicker" style="margin-bottom:14px;">Live on Mantle Sepolia</span>
+              <h2 class="lp-h2" style="font-size:clamp(26px,3.4vw,40px);">Not a mock — deployed &amp; settling.</h2>
+            </div>
+            <span class="lp-livechip"><span class="pip"></span>chainId 5003</span>
+          </div>
+          <div class="lp-proof-grid">
+            <div class="lp-proof-item">
+              <span class="k">SentinelVault</span>
+              <a class="v" target="_blank" rel="noopener" href="https://explorer.sepolia.mantle.xyz/address/0x3091c1ea643fF4Ec9513bee67A5dD1CcA639EdaD">0x3091…EdaD ↗</a>
+            </div>
+            <div class="lp-proof-item">
+              <span class="k">SentinelRegistry (audit)</span>
+              <a class="v" target="_blank" rel="noopener" href="https://explorer.sepolia.mantle.xyz/address/0x4fb41B9D1427886532d5289187Ce643A44FEA98b">0x4fb4…A98b ↗</a>
+            </div>
+            <div class="lp-proof-item">
+              <span class="k">Sample settlement (42 USDC)</span>
+              <a class="v" target="_blank" rel="noopener" href="https://explorer.sepolia.mantle.xyz/tx/0x3de48a3b0dd20fe8b60f16cad7b55f5db8647eb5d42ba6af4abab266b6bc4f1a">0x3de4…4f1a ↗</a>
+            </div>
+            <div class="lp-proof-item">
+              <span class="k">Enforcement tests</span>
+              <span class="v"><span class="ok">8 / 8 passing</span> · transfer · replay · forgery · expiry</span>
+            </div>
+          </div>
+        </div></div>
+      </div>
+    </section>
+
+    <!-- FINAL CTA -->
+    <section class="lp-section" style="padding-top:0;">
+      <div class="lp-wrap">
+        <div class="lp-cta-block bezel reveal"><div class="core">
+          <div class="glow"></div>
+          <span class="lp-kicker" style="justify-content:center;">Built for the Mantle Turing Hackathon</span>
+          <h2 class="lp-h2">See it settle <em>on-chain</em>.</h2>
+          <p class="lp-p" style="max-width:520px;margin:18px auto 0;">
+            Watch the AI police agent spends and settle them live on Mantle Sepolia — every
+            approval signed, every decision logged.
+          </p>
+          <div class="lp-cta-row">
+            <button class="lp-btn" id="btn-enter-dash-3">
+              Enter the War Room
+              <span class="lp-btn-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg></span>
+            </button>
+          </div>
+        </div></div>
+      </div>
+    </section>
+
+    <footer class="lp-footer">
+      <div class="lp-wrap">
+        <span class="fbrand">SENTINEL</span>
+        <span class="fnote">ON-CHAIN AI POLICY FIREWALL · MANTLE TURING HACKATHON</span>
+      </div>
     </footer>
   </div>
 
@@ -157,26 +238,25 @@
   <!-- 2. DASHBOARD VIEW                          -->
   <!-- ========================================== -->
   <div id="view-dashboard" style="display: none; opacity: 0;">
-    
+
     <header class="dash-header">
       <div class="dh-left">
-        <svg width="28" height="28" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg" stroke="#f97316" fill="none" stroke-width="8">
+        <svg width="28" height="28" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg" stroke="#f4a24c" fill="none" stroke-width="8">
           <polygon points="50 5, 95 25, 95 75, 50 95, 5 75, 5 25"/>
         </svg>
         <div class="dh-title-wrap">
           <div class="dh-title">SENTINEL</div>
-          <div class="dh-sub">AGENT SPEND GOVERNANCE // OWS PROTOCOL</div>
+          <div class="dh-sub">ON-CHAIN AI POLICY FIREWALL // MANTLE</div>
         </div>
       </div>
       <div class="dh-center">
         <button id="btn-back" class="btn-link">&larr; BACK</button>
       </div>
       <div class="dh-right">
-        <span class="badge">ETHEREUM</span>
-        <span class="badge">SOLANA</span>
-        <span class="badge">BITCOIN</span>
-        <span class="badge badge-moonpay" id="badge-moonpay">MOONPAY</span>
-        <span class="badge-pill" id="badge-ows"><span class="dot" id="ows-dot"></span><span id="ows-label">OWS SIM</span></span>
+        <span class="badge">MANTLE SEPOLIA</span>
+        <span class="badge">EIP-712</span>
+        <span class="badge" id="badge-llm">LLM</span>
+        <span class="badge-pill" id="badge-chain"><span class="dot" id="chain-dot"></span><span id="chain-label">CONNECTING</span></span>
       </div>
     </header>
 
@@ -184,23 +264,23 @@
       <!-- PANEL 1: AGENT VAULT -->
       <section class="panel p-vault">
         <div class="p-title">AGENT VAULT</div>
-        <div class="p-tag">~/.ows/wallets/</div>
+        <div class="p-tag">SentinelVault.sol @ Mantle</div>
 
         <div class="bal-box">
-          <div class="lbl">TOTAL BALANCE</div>
+          <div class="lbl">VAULT BALANCE (ON-CHAIN)</div>
           <div class="amt-row">
-            <span class="amt-val" id="bal">100.00</span>
+            <span class="amt-val" id="bal">0.00</span>
             <span class="amt-cur">USDC</span>
           </div>
-          <div class="amt-change">&minus; <span id="w-today">0.00</span> TODAY</div>
+          <div class="amt-change">&minus; <span id="w-today">0.00</span> TODAY &middot; <span id="w-mnt">0</span> MNT GAS</div>
         </div>
 
         <div class="w-addr-box">
-          <div class="lbl">AGENT ADDRESSES</div>
-          <div class="addr-chain"><span class="addr-tag">EVM</span> <span class="addr-val" id="addr-evm">0x7a3b...6a8b</span></div>
-          <div class="addr-chain"><span class="addr-tag sol">SOL</span> <span class="addr-val" id="addr-sol">&mdash;</span></div>
-          <div class="addr-chain"><span class="addr-tag btc">BTC</span> <span class="addr-val" id="addr-btc">&mdash;</span></div>
-          <div class="addr-src" id="addr-src">// CAIP-10 &middot; SIMULATION</div>
+          <div class="lbl">ON-CHAIN CONTRACTS</div>
+          <div class="addr-chain"><span class="addr-tag">VAULT</span> <a class="addr-val" id="addr-vault" href="#" target="_blank" rel="noopener">&mdash;</a></div>
+          <div class="addr-chain"><span class="addr-tag sol">AUDIT</span> <a class="addr-val" id="addr-registry" href="#" target="_blank" rel="noopener">&mdash;</a></div>
+          <div class="addr-chain"><span class="addr-tag btc">SIGNER</span> <span class="addr-val" id="addr-signer">&mdash;</span></div>
+          <div class="addr-src" id="addr-src">// awaiting deployment</div>
         </div>
 
         <div class="stats-list">
@@ -217,8 +297,8 @@
             <div class="val orange" id="tx-spent">$0.00</div>
           </div>
           <div class="stat-row">
-            <div class="lbl">POLICY VER</div>
-            <div class="val white">v3.1</div>
+            <div class="lbl">AUDIT RECORDS</div>
+            <div class="val white" id="tx-audit">0</div>
           </div>
           <div class="stat-row">
             <div class="lbl">LAST TX</div>
@@ -230,33 +310,31 @@
           <div class="p-title amber">DEAD AGENT SWITCH</div>
           <div class="das-bar-bg"><div class="das-bar-fill" id="hb-fill"></div></div>
           <div class="das-timer" id="hb-timer">168:00:00</div>
-          <div class="das-sub">UNTIL SUCCESSION FIRES</div>
+          <div class="das-sub">UNTIL FUND RECOVERY FIRES</div>
         </div>
       </section>
 
       <!-- PANEL 2: CENTER COLUMN (POLICY & FEED) -->
       <section class="panel-col center-col">
-        <!-- POLICY DOCUMENT -->
         <div class="panel p-policy">
           <div class="p-head">
             <div>
               <div class="p-title">POLICY DOCUMENT</div>
-              <div class="p-tag">LIVE EDITABLE // NL ENGINE</div>
+              <div class="p-tag">LIVE EDITABLE // PLAIN ENGLISH</div>
             </div>
           </div>
           <textarea id="policy-editor" spellcheck="false"></textarea>
           <div class="pol-foot">
-            <div class="pol-status"><span class="dot green"></span><span id="rule-count-lbl">7 RULES ACTIVE</span></div>
+            <div class="pol-status"><span class="dot green"></span><span id="rule-count-lbl">0 RULES ACTIVE</span></div>
             <button class="btn-push" id="btn-save">PUSH POLICY</button>
           </div>
         </div>
 
-        <!-- TRANSACTION FEED -->
         <div class="panel p-feed" id="p-feed">
           <div class="p-head">
             <div>
               <div class="p-title">TRANSACTION FEED</div>
-              <div class="p-tag">OWS INTERCEPT // REALTIME</div>
+              <div class="p-tag">ON-CHAIN SETTLEMENT // REALTIME</div>
             </div>
             <div class="p-tag right" id="tx-count">0 RECORDS</div>
           </div>
@@ -268,30 +346,37 @@
 
       <!-- PANEL 3: RIGHT COLUMN (CONTROLS & ENGINE) -->
       <section class="panel p-controls">
-        <div class="p-title">SIMULATION COM DEV</div>
-        <div class="p-tag">MANUAL AGENT IMPULSE</div>
-        
+        <div class="p-title">AGENT SPEND SIMULATOR</div>
+        <div class="p-tag">FIRE A TX AT THE FIREWALL</div>
+
         <div class="sim-grid">
-          <button class="sim-btn" data-amount="15" data-purpose="Cloud AI inference tier" data-recipient="OpenRouter">
-            <div class="s-amt">$15.00</div>
-            <div class="s-desc">API SERVICE</div>
+          <button class="sim-btn" data-amount="0.40" data-purpose="Oracle price query" data-recipient="ChainlinkFeed">
+            <div class="s-amt">$0.40</div>
+            <div class="s-desc">ORACLE QUERY</div>
           </button>
-          <button class="sim-btn" data-amount="8" data-purpose="Market data pipeline feed" data-recipient="Tenero API">
-            <div class="s-amt">$8.00</div>
-            <div class="s-desc">DATA FEED</div>
+          <button class="sim-btn" data-amount="42.00" data-purpose="GPU compute hour" data-recipient="ComputeProvider">
+            <div class="s-amt">$42.00</div>
+            <div class="s-desc">PAY FOR COMPUTE</div>
           </button>
-          <button class="sim-btn bad" data-amount="45" data-purpose="Rare NFT avatar purchase" data-recipient="Magiceden">
-            <div class="s-amt">$45.00</div>
-            <div class="s-desc">NFT MINT</div>
+          <button class="sim-btn bad" data-amount="150.00" data-purpose="Checkout via BlockedVendor" data-recipient="BlockedVendor">
+            <div class="s-amt">$150.00</div>
+            <div class="s-desc">BLOCKED VENDOR</div>
           </button>
-          <button class="sim-btn bad" data-amount="25" data-purpose="Cloud server rental fee" data-recipient="AWS">
-            <div class="s-amt">$25.00</div>
-            <div class="s-desc">OVER LIMIT</div>
+          <button class="sim-btn bad" data-amount="5.00" data-purpose="Heavy compute search query" data-recipient="SearchAPI">
+            <div class="s-amt">$5.00</div>
+            <div class="s-desc">SEARCH OVERLIMIT</div>
           </button>
         </div>
 
-        <div class="p-title mt-4">CLAUDE DECISION ENGINE</div>
-        <div class="p-tag">LLM REASONING LOOP</div>
+        <div class="sim-grid">
+          <button class="sim-btn adv" id="btn-adversarial" style="grid-column: span 2; border-color: var(--cyan); background: rgba(87, 224, 216, 0.08);">
+            <div class="s-amt" style="color: var(--cyan);">RED TEAM MODE</div>
+            <div class="s-desc">FIRE ADVERSARIAL PROBES</div>
+          </button>
+        </div>
+
+        <div class="p-title mt-4">AI DECISION ENGINE</div>
+        <div class="p-tag">LLM REASONING + EIP-712 SIGNING</div>
         <div class="llm-feed" id="llm-feed">
           <div class="feed-empty">ENGINE STANDBY</div>
         </div>
@@ -299,7 +384,7 @@
 
     </main>
   </div>
-  
+
   <script src="app.js"></script>
 </body>
 </html>

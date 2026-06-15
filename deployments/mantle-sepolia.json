@@ -1,0 +1,15 @@
+{
+  "network": "mantle-sepolia",
+  "chainId": 5003,
+  "rpcUrl": "https://rpc.sepolia.mantle.xyz",
+  "explorer": "https://explorer.sepolia.mantle.xyz",
+  "deployedAt": "2026-06-15T11:03:48.735Z",
+  "deployBlock": 39988377,
+  "deployer": "0x682B71111582B0225B9bE978FE8C1CD08dFb8cc4",
+  "policySigner": "0x6e47d4a059D2EA9b462A75ee92c52E7536e0a4d7",
+  "contracts": {
+    "MockUSDC": "0xC25CF5Aa8e97d3C262795fF81f7FeF15d4A5d3aD",
+    "SentinelRegistry": "0x4fb41B9D1427886532d5289187Ce643A44FEA98b",
+    "SentinelVault": "0x3091c1ea643fF4Ec9513bee67A5dD1CcA639EdaD"
+  }
+}
